@@ -1,0 +1,59 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a Next.js application for generating fiscal receipts using HTML canvas rendering. The app allows users to create receipt images that can be downloaded as PNG files. The target thermal printer has a printing resolution width of 384px.
+
+## Development Commands
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build production application with Turbopack  
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+
+## Architecture
+
+The application follows Next.js 15 App Router structure:
+
+- **Main Route**: `src/app/page.tsx` - Contains the primary interface with a form for customizing receipts and live preview
+- **Components**: `src/components/` - Reusable React components
+  - `ReceiptRenderer.tsx` - Core canvas-based receipt rendering component with download functionality
+- **Styling**: Uses Tailwind CSS v4 with custom CSS variables for theming
+- **TypeScript**: Configured with strict mode and path aliases (`@/*` maps to `./src/*`)
+
+## Key Technologies
+
+- Next.js 15 with App Router
+- React 19
+- TypeScript with strict configuration
+- Tailwind CSS v4
+- HTML Canvas API for receipt rendering
+- Geist font family (sans and mono variants)
+
+## Receipt System Architecture
+
+### Form-Based Interface
+The main route features:
+- Interactive form for customizing receipt data with default values
+- Live preview that updates as form fields change
+- Form fields include store information, items, pricing, and payment details
+
+### Receipt Rendering System
+The `ReceiptRenderer` component handles:
+- Canvas-based receipt image generation with 384px width (thermal printer resolution)
+- Real-time rendering triggered by form state changes
+- Proper typography and layout for thermal receipt format
+- PNG download functionality
+- Dynamic height calculation based on receipt content
+
+Receipt data follows a structured interface with store information, itemized purchases, tax calculations, and payment details.
+
+## Important Notes
+
+- Canvas width is fixed at 384px to match thermal printer resolution
+- Uses `'use client'` directive for canvas components due to client-side rendering requirements
+- Form state drives live preview updates
+- Download functionality uses HTML5 canvas `toDataURL()` method
+- Project intended for fair use only (as noted in README)
