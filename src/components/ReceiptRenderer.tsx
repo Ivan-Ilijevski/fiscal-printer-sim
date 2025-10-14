@@ -14,10 +14,12 @@ interface ReceiptData {
   storeName: string;
   address: string;
   taxNumber: string;
-  vatNumber: string;
+  vatNumber: string; 
   items: ReceiptItem[];
-  subtotal: number;
-  tax: number;
+  vatTypeA: number;
+  vatTypeB: number;
+  vatTypeV: number;
+  vatTypeG: number;
   total: number;
   paymentMethod: string;
   receiptNumber: string;
@@ -137,10 +139,22 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
 
   ctx.textAlign = 'right';
-  ctx.fillText(`Subtotal: $${data.subtotal.toFixed(2)}`, width - padding, y);
-  y += 16;
-  ctx.fillText(`Tax: $${data.tax.toFixed(2)}`, width - padding, y);
-  y += 16;
+  if (data.vatTypeA > 0) {
+    ctx.fillText(`VAT A: $${data.vatTypeA.toFixed(2)}`, width - padding, y);
+    y += 16;
+  }
+  if (data.vatTypeB > 0) {
+    ctx.fillText(`VAT B: $${data.vatTypeB.toFixed(2)}`, width - padding, y);
+    y += 16;
+  }
+  if (data.vatTypeV > 0) {
+    ctx.fillText(`VAT V: $${data.vatTypeV.toFixed(2)}`, width - padding, y);
+    y += 16;
+  }
+  if (data.vatTypeG > 0) {
+    ctx.fillText(`VAT G: $${data.vatTypeG.toFixed(2)}`, width - padding, y);
+    y += 16;
+  }
   
   ctx.font = 'bold 18px monospace';
   ctx.fillText(`Total: $${data.total.toFixed(2)}`, width - padding, y);

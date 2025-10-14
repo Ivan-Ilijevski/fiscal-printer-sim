@@ -16,8 +16,10 @@ interface ReceiptData {
   taxNumber: string;
   vatNumber: string;
   items: ReceiptItem[];
-  subtotal: number;
-  tax: number;
+  vatTypeA: number;
+  vatTypeB: number;
+  vatTypeV: number;
+  vatTypeG: number;
   total: number;
   paymentMethod: string;
   receiptNumber: string;
@@ -58,15 +60,13 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
     
     newItems[index] = item;
     
-    const subtotal = newItems.reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * 0.09;
-    const total = subtotal + tax;
+    const totalAmount = newItems.reduce((sum, item) => sum + item.total, 0);
+    const vatTypeA = totalAmount - (totalAmount / 1.18);
     
     updateFormData({
       items: newItems,
-      subtotal: Number(subtotal.toFixed(2)),
-      tax: Number(tax.toFixed(2)),
-      total: Number(total.toFixed(2))
+      vatTypeA: Number(vatTypeA.toFixed(2)),
+      total: Number(totalAmount.toFixed(2))
     });
   };
 
@@ -79,29 +79,25 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
     };
     
     const newItems = [...formData.items, newItem];
-    const subtotal = newItems.reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * 0.09;
-    const total = subtotal + tax;
+    const totalAmount = newItems.reduce((sum, item) => sum + item.total, 0);
+    const vatTypeA = totalAmount - (totalAmount / 1.18);
     
     updateFormData({
       items: newItems,
-      subtotal: Number(subtotal.toFixed(2)),
-      tax: Number(tax.toFixed(2)),
-      total: Number(total.toFixed(2))
+      vatTypeA: Number(vatTypeA.toFixed(2)),
+      total: Number(totalAmount.toFixed(2))
     });
   };
 
   const removeItem = (index: number) => {
     const newItems = formData.items.filter((_, i) => i !== index);
-    const subtotal = newItems.reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * 0.09;
-    const total = subtotal + tax;
+    const totalAmount = newItems.reduce((sum, item) => sum + item.total, 0);
+    const vatTypeA = totalAmount - (totalAmount / 1.18);
     
     updateFormData({
       items: newItems,
-      subtotal: Number(subtotal.toFixed(2)),
-      tax: Number(tax.toFixed(2)),
-      total: Number(total.toFixed(2))
+      vatTypeA: Number(vatTypeA.toFixed(2)),
+      total: Number(totalAmount.toFixed(2))
     });
   };
 
@@ -246,12 +242,20 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
       {/* Totals Summary */}
       <div className="bg-gray-50 p-4 rounded space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Subtotal:</span>
-          <span>${formData.subtotal.toFixed(2)}</span>
+          <span>VAT Type A (18%):</span>
+          <span>${formData.vatTypeA.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Tax (9%):</span>
-          <span>${formData.tax.toFixed(2)}</span>
+          <span>VAT Type B (5%):</span>
+          <span>${formData.vatTypeB.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>VAT Type V (0%):</span>
+          <span>${formData.vatTypeV.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>VAT Type G (0%):</span>
+          <span>${formData.vatTypeG.toFixed(2)}</span>
         </div>
         <div className="flex justify-between font-bold">
           <span>Total:</span>

@@ -11,12 +11,14 @@ const defaultReceiptData = {
   taxNumber: '(555) 123-4567',
   vatNumber: '(555) 765-4321',
   items: [
-    { name: 'Coffee', quantity: 2, price: 3.50, total: 7.00 },
-    { name: 'Sandwich', quantity: 1, price: 8.99, total: 8.99 },
-    { name: 'Pastry', quantity: 3, price: 2.25, total: 6.75 }
+    { name: 'Coffee', quantity: 2, price: 3.50, total: 7.63 },
+    { name: 'Sandwich', quantity: 1, price: 8.99, total: 9.80 },
+    { name: 'Pastry', quantity: 3, price: 2.25, total: 7.36 }
   ],
-  subtotal: 22.74,
-  tax: 2.05,
+  vatTypeA: 18.00,
+  vatTypeB: 5.00,
+  vatTypeV: 0.00,
+  vatTypeG: 0.00,
   total: 24.79,
   paymentMethod: 'Credit Card',
   receiptNumber: '0012',

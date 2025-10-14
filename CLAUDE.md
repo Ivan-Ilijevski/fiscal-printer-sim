@@ -48,7 +48,71 @@ The `ReceiptRenderer` component handles:
 - PNG download functionality
 - Dynamic height calculation based on receipt content
 
-Receipt data follows a structured interface with store information, itemized purchases, tax calculations, and payment details.
+Receipt data follows a structured interface with store information, itemized purchases, VAT calculations, and payment details.
+
+## VAT System Architecture
+
+### VAT Types
+The application supports four distinct VAT types following fiscal printer standards:
+
+- **VAT Type A (18%)**: Standard rate VAT for most goods and services
+- **VAT Type B (5%)**: Reduced rate VAT for specific categories
+- **VAT Type V (0%)**: VAT-exempt transactions 
+- **VAT Type G (0%)**: Zero-rated goods and services
+
+### VAT Calculation Logic
+VAT calculations work backward from tax-inclusive totals:
+
+**For VAT Type A (18%):**
+```typescript
+const vatTypeA = total - (total / 1.18);
+```
+
+**Key Features:**
+- **Tax-inclusive pricing**: Item totals include VAT amounts
+- **Backward calculation**: VAT extracted from inclusive totals rather than added
+- **Multi-VAT support**: Each transaction can contain multiple VAT types
+- **Dynamic display**: Only VAT types with amounts > $0.00 appear on receipts
+- **Precision handling**: All calculations rounded to 2 decimal places
+
+### Interface Structure
+```typescript
+interface ReceiptData {
+  // Store information
+  receiptType: string;
+  storeName: string;
+  address: string;
+  taxNumber: string;
+  vatNumber: string;
+  
+  // Transaction data
+  items: ReceiptItem[];
+  vatTypeA: number;  // 18% VAT amount in dollars
+  vatTypeB: number;  // 5% VAT amount in dollars
+  vatTypeV: number;  // 0% VAT amount in dollars
+  vatTypeG: number;  // 0% VAT amount in dollars
+  total: number;     // Tax-inclusive total
+  
+  // Receipt metadata
+  paymentMethod: string;
+  receiptNumber: string;
+  date: string;
+}
+```
+
+### Form Integration
+The `ReceiptForm` component:
+- Automatically recalculates VAT when item totals change
+- Displays all four VAT types in the totals summary
+- Updates VAT Type A based on current 18% rate
+- Maintains other VAT types as set values
+
+### Receipt Display
+The `ReceiptRenderer` component:
+- Shows only VAT types with values > 0
+- Formats VAT amounts as "VAT A: $X.XX"
+- Positions VAT information between items and total
+- Maintains proper fiscal receipt formatting
 
 ## Important Notes
 
@@ -56,4 +120,5 @@ Receipt data follows a structured interface with store information, itemized pur
 - Uses `'use client'` directive for canvas components due to client-side rendering requirements
 - Form state drives live preview updates
 - Download functionality uses HTML5 canvas `toDataURL()` method
+- VAT calculations assume tax-inclusive pricing model
 - Project intended for fair use only (as noted in README)
