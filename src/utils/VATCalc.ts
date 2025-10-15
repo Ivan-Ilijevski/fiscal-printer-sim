@@ -1,4 +1,4 @@
-import { ReceiptData, ReceiptItem } from '@/types/receipt';
+import { ReceiptData } from '@/types/receipt';
 
 export function calculateVAT(data: ReceiptData, vatType: 'A' | 'B' | 'V' | 'G'): number{
     let total = 0;

@@ -58,7 +58,7 @@ The data is structured to mimic a Macedonain fiscal receipt:
 - Tax number: 1234567890123
 - VAT number: МК1234567890123
 - item  {right aligned- 1 x 50,00}
-- item  {right aligned-   50,00 Г} // where G is the type od VAT
+- item  {right aligned-   50,00 Г} // where Г is the Macedonian Cyrillic VAT type (А, Б, В, Г)
 - SPACER // the spacer consists of dashes
 - ПРОМЕТ ОД МАКЕДОНСКИ ПР. {right aligned-   50,00}
 
@@ -123,6 +123,7 @@ The `ReceiptForm` component:
 The `ReceiptRenderer` component:
 - Shows only VAT types with values > 0
 - Formats VAT amounts as "VAT A: $X.XX"
+- Displays VAT types in Macedonian Cyrillic characters (А, Б, В, Г) on receipt items
 - Positions VAT information between items and total
 - Maintains proper fiscal receipt formatting
 

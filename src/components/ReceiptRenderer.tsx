@@ -1,8 +1,10 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { ReceiptData, ReceiptItem } from '@/types/receipt';
+import { useTranslations } from 'next-intl';
+import { ReceiptData } from '@/types/receipt';
 import { calculateVAT } from '@/utils/VATCalc';
+import { Button } from '@/components/ui/button';
 
 interface ReceiptRendererProps {
   receiptData: ReceiptData;
@@ -12,6 +14,7 @@ interface ReceiptRendererProps {
 export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
+  const t = useTranslations();
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -38,19 +41,21 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
   }, [receiptData, onCanvasReady]);
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <canvas 
-        ref={canvasRef}
-        className="border border-gray-300 shadow-lg"
-        style={{ maxWidth: '100%', height: 'auto' }}
-      />
+    <div className="flex flex-col items-center gap-8">
+      <div className="backdrop-blur-lg bg-white/15 border border-white/25 shadow-lg rounded-3xl p-8">
+        <canvas 
+          ref={canvasRef}
+          className="rounded-2xl shadow-lg"
+          style={{ maxWidth: '100%', height: 'auto' }}
+        />
+      </div>
       {isRendered && (
-        <button
+        <Button
           onClick={downloadReceipt}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          className="w-full backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-12 text-lg font-light tracking-wide transition-all duration-200"
         >
-          Download Receipt
-        </button>
+          {t('downloadReceipt')}
+        </Button>
       )}
     </div>
   );
@@ -106,7 +111,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   data.items.forEach(item => {
     const itemLine = `${item.quantity}x ${item.name}`;
     const totalPrice = item.price * item.quantity;
-    const priceText = `${totalPrice.toFixed(2).replace('.', ',')} ${item.vatType}`;
+    const priceText = `${totalPrice.toFixed(2).replace('.', ',')} ${item.vatType==='A'?'А':item.vatType==='B'?'Б':item.vatType==='V'?'В':'Г'}`;
     // си имаат две линии за текст ако има повеќе артикли
     ctx.fillText(itemLine, padding, y);
     ctx.textAlign = 'right';
@@ -120,10 +125,10 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   //18
   
 
-  let vatA = calculateVAT(data, 'A');
-  let vatB = calculateVAT(data, 'B');
-  let vatV = calculateVAT(data, 'V');
-  let vatG = calculateVAT(data, 'G');
+  const vatA = calculateVAT(data, 'A');
+  const vatB = calculateVAT(data, 'B');
+  const vatV = calculateVAT(data, 'V');
+  const vatG = calculateVAT(data, 'G');
 
 
   ctx.font = 'bold 18px monospace';
@@ -178,11 +183,3 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   ctx.fillText('Thank you for your purchase!', padding, y);
 }
 
-function drawLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-}
