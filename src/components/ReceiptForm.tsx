@@ -1,30 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-interface ReceiptItem {
-  name: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
-
-interface ReceiptData {
-  receiptType: string;
-  storeName: string;
-  address: string;
-  taxNumber: string;
-  vatNumber: string;
-  items: ReceiptItem[];
-  vatTypeA: number;
-  vatTypeB: number;
-  vatTypeV: number;
-  vatTypeG: number;
-  total: number;
-  paymentMethod: string;
-  receiptNumber: string;
-  date: string;
-}
+import { ReceiptData, ReceiptItem } from '@/types/receipt';
 
 interface ReceiptFormProps {
   initialData: ReceiptData;
@@ -52,20 +29,18 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
       item.name = value as string;
     } else if (field === 'quantity') {
       item.quantity = Number(value);
-      item.total = item.quantity * item.price;
     } else if (field === 'price') {
       item.price = Number(value);
-      item.total = item.quantity * item.price;
+    } else if (field === 'vatType') {
+      item.vatType = value as 'A' | 'B' | 'V' | 'G';
     }
-    
+
     newItems[index] = item;
     
-    const totalAmount = newItems.reduce((sum, item) => sum + item.total, 0);
-    const vatTypeA = totalAmount - (totalAmount / 1.18);
+    const totalAmount = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     updateFormData({
       items: newItems,
-      vatTypeA: Number(vatTypeA.toFixed(2)),
       total: Number(totalAmount.toFixed(2))
     });
   };
@@ -75,28 +50,24 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
       name: 'New Item',
       quantity: 1,
       price: 0.00,
-      total: 0.00
+      vatType: 'A'
     };
     
     const newItems = [...formData.items, newItem];
-    const totalAmount = newItems.reduce((sum, item) => sum + item.total, 0);
-    const vatTypeA = totalAmount - (totalAmount / 1.18);
+    const totalAmount = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     updateFormData({
       items: newItems,
-      vatTypeA: Number(vatTypeA.toFixed(2)),
       total: Number(totalAmount.toFixed(2))
     });
   };
 
   const removeItem = (index: number) => {
     const newItems = formData.items.filter((_, i) => i !== index);
-    const totalAmount = newItems.reduce((sum, item) => sum + item.total, 0);
-    const vatTypeA = totalAmount - (totalAmount / 1.18);
+    const totalAmount = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     updateFormData({
       items: newItems,
-      vatTypeA: Number(vatTypeA.toFixed(2)),
       total: Number(totalAmount.toFixed(2))
     });
   };
@@ -208,7 +179,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
               className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Quantity</label>
                 <input
@@ -220,7 +191,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Price</label>
+                <label className="block text-xs text-gray-500 mb-1">Unit Price</label>
                 <input
                   type="number"
                   step="0.01"
@@ -232,8 +203,31 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
               </div>
             </div>
             
-            <div className="text-right text-sm text-gray-600">
-              Total: ${item.total.toFixed(2)}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Total (inc. VAT)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={(item.price * item.quantity).toFixed(2)}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded text-sm bg-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">VAT Type</label>
+                <select
+                  value={item.vatType}
+                  onChange={(e) => updateItem(index, 'vatType', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="A">A (18%)</option>
+                  <option value="B">B (5%)</option>
+                  <option value="V">V (0%)</option>
+                  <option value="G">G (0%)</option>
+                </select>
+              </div>
             </div>
           </div>
         ))}

@@ -1,30 +1,8 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-
-interface ReceiptItem {
-  name: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
-
-interface ReceiptData {
-  receiptType: string;
-  storeName: string;
-  address: string;
-  taxNumber: string;
-  vatNumber: string; 
-  items: ReceiptItem[];
-  vatTypeA: number;
-  vatTypeB: number;
-  vatTypeV: number;
-  vatTypeG: number;
-  total: number;
-  paymentMethod: string;
-  receiptNumber: string;
-  date: string;
-}
+import { ReceiptData, ReceiptItem } from '@/types/receipt';
+import { calculateVAT } from '@/utils/VATCalc';
 
 interface ReceiptRendererProps {
   receiptData: ReceiptData;
@@ -115,8 +93,11 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   y += 16;
   ctx.fillText(data.address, width / 2, y);
   y += 16;
-  ctx.fillText(data.vatNumber, width / 2, y);
+  ctx.fillText(`ДАН.БРОЈ: ${data.taxNumber}`, width / 2, y);
+  y += 16;
+  ctx.fillText(`ДДВ БРОЈ: ${data.vatNumber}`, width / 2, y);
   y += 30;
+  
 
   ctx.textAlign = 'left';
 
@@ -124,8 +105,9 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
   data.items.forEach(item => {
     const itemLine = `${item.quantity}x ${item.name}`;
-    const priceText = `$${item.total.toFixed(2)}`;
-    
+    const totalPrice = item.price * item.quantity;
+    const priceText = `${totalPrice.toFixed(2).replace('.', ',')} ${item.vatType}`;
+    // си имаат две линии за текст ако има повеќе артикли
     ctx.fillText(itemLine, padding, y);
     ctx.textAlign = 'right';
     ctx.fillText(priceText, width - padding, y);
@@ -136,28 +118,50 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
   y += 20;
   //18
-
-
-  ctx.textAlign = 'right';
-  if (data.vatTypeA > 0) {
-    ctx.fillText(`VAT A: $${data.vatTypeA.toFixed(2)}`, width - padding, y);
-    y += 16;
-  }
-  if (data.vatTypeB > 0) {
-    ctx.fillText(`VAT B: $${data.vatTypeB.toFixed(2)}`, width - padding, y);
-    y += 16;
-  }
-  if (data.vatTypeV > 0) {
-    ctx.fillText(`VAT V: $${data.vatTypeV.toFixed(2)}`, width - padding, y);
-    y += 16;
-  }
-  if (data.vatTypeG > 0) {
-    ctx.fillText(`VAT G: $${data.vatTypeG.toFixed(2)}`, width - padding, y);
-    y += 16;
-  }
   
+
+  let vatA = calculateVAT(data, 'A');
+  let vatB = calculateVAT(data, 'B');
+  let vatV = calculateVAT(data, 'V');
+  let vatG = calculateVAT(data, 'G');
+
+
   ctx.font = 'bold 18px monospace';
-  ctx.fillText(`Total: $${data.total.toFixed(2)}`, width - padding, y);
+  ctx.fillText(`ВКУПЕН ПРОМЕТ`,padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
+  y += 20;
+
+  ctx.font = '18px monospace';
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText((vatA + vatB + vatV + vatG).toFixed(2).replace('.', ','), width - padding, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ А=${data.vatTypeA.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(vatA.toFixed(2).replace('.', ','), width - padding, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ Б=${data.vatTypeB.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(vatB.toFixed(2).replace('.', ','), width - padding, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ В=${data.vatTypeV.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(vatV.toFixed(2).replace('.', ','), width - padding, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ Г=${data.vatTypeG.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(vatG.toFixed(2).replace('.', ','), width - padding, y);
   y += 30;
 
   ctx.font = '18px monospace';
@@ -169,7 +173,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   // ctx.textAlign = 'center';
   ctx.fillText(`${data.paymentMethod}`, padding, y);
   ctx.textAlign = 'right';
-  ctx.fillText(data.total.toFixed(2), width - padding, y);
+  ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
   y += 20;
   ctx.fillText('Thank you for your purchase!', padding, y);
 }

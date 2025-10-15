@@ -19,6 +19,7 @@ The application follows Next.js 15 App Router structure:
 
 - **Main Route**: `src/app/page.tsx` - Contains the primary interface with a form for customizing receipts and live preview
 - **Components**: `src/components/` - Reusable React components
+  - `ReceiptForm.tsx` - Interactive form component for customizing receipt data
   - `ReceiptRenderer.tsx` - Core canvas-based receipt rendering component with download functionality
 - **Styling**: Uses Tailwind CSS v4 with custom CSS variables for theming
 - **TypeScript**: Configured with strict mode and path aliases (`@/*` maps to `./src/*`)
@@ -48,7 +49,18 @@ The `ReceiptRenderer` component handles:
 - PNG download functionality
 - Dynamic height calculation based on receipt content
 
-Receipt data follows a structured interface with store information, itemized purchases, VAT calculations, and payment details.
+Receipt data follows a structured interface with the type od receipt, store information tax information and item information.
+The data is structured to mimic a Macedonain fiscal receipt:
+- ФИСКАЛНА СМЕТКА
+- #0123
+- Legal company name
+- Store info
+- Tax number: 1234567890123
+- VAT number: МК1234567890123
+- item  {right aligned- 1 x 50,00}
+- item  {right aligned-   50,00 Г} // where G is the type od VAT
+- SPACER // the spacer consists of dashes
+- ПРОМЕТ ОД МАКЕДОНСКИ ПР. {right aligned-   50,00}
 
 ## VAT System Architecture
 

@@ -3,17 +3,18 @@
 import { useState } from 'react';
 import ReceiptRenderer from '@/components/ReceiptRenderer';
 import ReceiptForm from '@/components/ReceiptForm';
+import { ReceiptData } from '@/types/receipt';
 
-const defaultReceiptData = {
+const defaultReceiptData: ReceiptData = {
   receiptType: 'ФИСКАЛНА СМЕТКА',
   storeName: 'Sample Store',
   address: '123 Main St, City, ST 12345',
   taxNumber: '(555) 123-4567',
   vatNumber: '(555) 765-4321',
   items: [
-    { name: 'Coffee', quantity: 2, price: 3.50, total: 7.63 },
-    { name: 'Sandwich', quantity: 1, price: 8.99, total: 9.80 },
-    { name: 'Pastry', quantity: 3, price: 2.25, total: 7.36 }
+    { name: 'Coffee', quantity: 2, price: 3.50, vatType: 'A' as const },
+    { name: 'Sandwich', quantity: 1, price: 8.99, vatType: 'A' as const },
+    { name: 'Pastry', quantity: 3, price: 2.25, vatType: 'B' as const }
   ],
   vatTypeA: 18.00,
   vatTypeB: 5.00,
