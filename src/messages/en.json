@@ -25,6 +25,7 @@
   "vatTypeV": "VAT Type V (0%)",
   "vatTypeG": "VAT Type G (0%)",
   "total": "Total",
+  "domesticProduct": "Domestic product",
   "paymentMethods": {
     "creditCard": "Credit Card",
     "cash": "Cash",

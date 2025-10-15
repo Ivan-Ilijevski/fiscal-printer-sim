@@ -3,6 +3,7 @@ export interface ReceiptItem {
   quantity: number;
   price: number;
   vatType: 'A' | 'B' | 'V' | 'G';
+  isDomestic: boolean;
 }
 
 export interface ReceiptData {
@@ -20,4 +21,5 @@ export interface ReceiptData {
   paymentMethod: string;
   receiptNumber: string;
   date: string;
+  datamatrixCode: string;
 }

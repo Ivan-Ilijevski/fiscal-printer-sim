@@ -25,6 +25,7 @@
   "vatTypeV": "ДДВ Тип В (0%)",
   "vatTypeG": "ДДВ Тип Г (0%)",
   "total": "Вкупно",
+  "domesticProduct": "Македонски производ",
   "paymentMethods": {
     "creditCard": "Кредитна Картичка",
     "cash": "Готовина",

@@ -27,7 +27,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
     updateFormData({ [field]: value });
   };
 
-  const updateItem = (index: number, field: keyof ReceiptItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof ReceiptItem, value: string | number | boolean) => {
     const newItems = [...formData.items];
     const item = { ...newItems[index] };
     
@@ -39,6 +39,8 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
       item.price = Number(value);
     } else if (field === 'vatType') {
       item.vatType = value as 'A' | 'B' | 'V' | 'G';
+    } else if (field === 'isDomestic') {
+      item.isDomestic = value as boolean;
     }
 
     newItems[index] = item;
@@ -56,7 +58,8 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
       name: 'New Item',
       quantity: 1,
       price: 0.00,
-      vatType: 'A'
+      vatType: 'A',
+      isDomestic: false
     };
     
     const newItems = [...formData.items, newItem];
@@ -180,6 +183,19 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="datamatrixCode" className="text-gray-700/90 font-medium text-xs">Datamatrix Code</Label>
+              <Input
+                id="datamatrixCode"
+                type="text"
+                value={formData.datamatrixCode}
+                onChange={(e) => updateStoreInfo('datamatrixCode', e.target.value)}
+                placeholder="Enter 4 characters (e.g., ABCD)"
+                maxLength={4}
+                className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 placeholder:text-gray-500/60 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -264,7 +280,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                         className="backdrop-blur-md bg-white/5 border border-white/15 text-slate-500 h-12"
                       />
                     </div>
-                    
+                    <div className='grid grid-cols-2'>
                     <div className="space-y-3">
                       <Label htmlFor={`vatType-${index}`} className="text-slate-600 font-light text-sm">{t('vatType')}</Label>
                       <Select
@@ -282,6 +298,21 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-3">
+                      <Label htmlFor={`isDomestic-${index}`} className="text-slate-600 font-light text-sm">{t('domesticProduct')}</Label>
+                      <div className="flex items-center h-12">
+                        <input
+                          id={`isDomestic-${index}`}
+                          type="checkbox"
+                          checked={item.isDomestic}
+                          onChange={(e) => updateItem(index, 'isDomestic', e.target.checked)}
+                          className="w-5 h-5 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    </div>
+                    
                   </div>
                 </div>
               </div>
@@ -308,8 +339,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                     <span className="text-slate-600 font-light">{t('vatTypeB')} {formData.vatTypeB}%:</span>
                     <span className="font-medium text-slate-700">${formData.vatTypeB.toFixed(2)}</span>
                   </div>
-                </div>
-                <div className="space-y-4 text-sm">
+                
                   <div className="flex justify-between">
                     <span className="text-slate-600 font-light">{t('vatTypeV')} {formData.vatTypeV}%:</span>
                     <span className="font-medium text-slate-700">${formData.vatTypeV.toFixed(2)}</span>

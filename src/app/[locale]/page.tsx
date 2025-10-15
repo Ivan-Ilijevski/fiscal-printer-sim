@@ -9,23 +9,24 @@ import { ReceiptData } from '@/types/receipt';
 
 const defaultReceiptData: ReceiptData = {
   receiptType: 'ФИСКАЛНА СМЕТКА',
-  storeName: 'Sample Store',
-  address: '123 Main St, City, ST 12345',
+  storeName: 'ГРАНДПРОМ - ЗУР Д.О.О.Е.Л.',
+  address: 'УЛИЦА 7 260 СКОПЈЕ',
   taxNumber: '(555) 123-4567',
   vatNumber: '(555) 765-4321',
   items: [
-    { name: 'Coffee', quantity: 2, price: 3.50, vatType: 'A' as const },
-    { name: 'Sandwich', quantity: 1, price: 8.99, vatType: 'A' as const },
-    { name: 'Pastry', quantity: 3, price: 2.25, vatType: 'B' as const }
+    { name: 'Coffee', quantity: 2, price: 3.50, vatType: 'A' as const, isDomestic: false },
+    { name: 'Sandwich', quantity: 1, price: 8.99, vatType: 'A' as const, isDomestic: false },
+    { name: 'Pastry', quantity: 3, price: 2.25, vatType: 'B' as const, isDomestic: false }
   ],
   vatTypeA: 18.00,
   vatTypeB: 5.00,
   vatTypeV: 0.00,
   vatTypeG: 0.00,
   total: 24.79,
-  paymentMethod: 'Credit Card',
+  paymentMethod: 'ВО ГОТОВО',
   receiptNumber: '0012',
-  date: new Date().toLocaleDateString()
+  date: new Date().toLocaleDateString(),
+  datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh'
 };
 
 export default function Home() {

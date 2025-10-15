@@ -3,8 +3,9 @@
 import { useRef, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData } from '@/types/receipt';
-import { calculateVAT } from '@/utils/VATCalc';
+import { calculateDomesticVAT, calculateVAT } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
+import bwipjs from 'bwip-js';
 
 interface ReceiptRendererProps {
   receiptData: ReceiptData;
@@ -42,13 +43,13 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
 
   return (
     <div className="flex flex-col items-center gap-8">
-      <div className="backdrop-blur-lg bg-white/15 border border-white/25 shadow-lg rounded-3xl p-8">
+    
         <canvas 
           ref={canvasRef}
-          className="rounded-2xl shadow-lg"
+          className=" shadow-lg"
           style={{ maxWidth: '100%', height: 'auto' }}
         />
-      </div>
+      
       {isRendered && (
         <Button
           onClick={downloadReceipt}
@@ -74,7 +75,7 @@ function calculateReceiptHeight(data: ReceiptData): number {
   const headerHeight = 120;
   const itemHeight = 20;
   const itemsHeight = data.items.length * itemHeight;
-  const footerHeight = 140;
+  const footerHeight = 600;
   const padding = 40;
   
   return headerHeight + itemsHeight + footerHeight + padding;
@@ -95,9 +96,9 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
   ctx.font = '18px monospace';
   ctx.fillText(data.storeName, width / 2, y);
-  y += 16;
+  y += 18;
   ctx.fillText(data.address, width / 2, y);
-  y += 16;
+  y += 18;
   ctx.fillText(`ДАН.БРОЈ: ${data.taxNumber}`, width / 2, y);
   y += 16;
   ctx.fillText(`ДДВ БРОЈ: ${data.vatNumber}`, width / 2, y);
@@ -120,6 +121,57 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
     y += 20;
   });
 
+  {/* Промет од македонски производи */}
+  ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
+  y += 20;
+  //18
+  
+
+  const dVatA = calculateDomesticVAT(data, 'A');
+  const dVatB = calculateDomesticVAT(data, 'B');
+  const dVatV = calculateDomesticVAT(data, 'V');
+  const dVatG = calculateDomesticVAT(data, 'G');
+
+
+  ctx.font = '18px monospace';
+  ctx.fillText(`ПРОМЕТ ОД МАКЕДОНСКИ ПР.`,padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
+  y += 20;
+
+  ctx.font = '18px monospace';
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ А=${data.vatTypeA.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(dVatA.toFixed(2).replace('.', ','), width - padding, y);
+  y += 18;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ Б=${data.vatTypeB.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(dVatB.toFixed(2).replace('.', ','), width - padding, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ В=${data.vatTypeV.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(dVatV.toFixed(2).replace('.', ','), width - padding, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ Г=${data.vatTypeG.toFixed(2).replace('.', ',')}%`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(dVatG.toFixed(2).replace('.', ','), width - padding, y);
+  y+= 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`ВКУПНО ДДВ`, padding, y);
+  ctx.textAlign = 'right';
+  ctx.fillText((dVatA + dVatB + dVatV + dVatG).toFixed(2).replace('.', ','), width - padding, y);
+  y += 25;
+
+  ctx.textAlign = 'left';
   ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
   y += 20;
   //18
@@ -176,10 +228,66 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
   // ctx.font = '12px monospace';
   // ctx.textAlign = 'center';
+  ctx.fillText('ВИ БЛАГОДАРИМЕ!', padding, y);
+  y += 20;
   ctx.fillText(`${data.paymentMethod}`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
-  y += 20;
-  ctx.fillText('Thank you for your purchase!', padding, y);
+  y += 10;
+  ctx.textAlign = 'left';
+  
+
+  // Render 2x2 datamatrix
+  if (data.datamatrixCode) {
+    render2x2Datamatrix(ctx, data.datamatrixCode, width, y);
+  }
+}
+
+function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, canvasWidth: number, y: number) {
+  try {
+    // Generate the full datamatrix using bwip-js
+    const canvas = document.createElement('canvas');
+    bwipjs.toCanvas(canvas, {
+      bcid: 'datamatrix',
+      text: code,
+      scale: 3,
+      includetext: false,
+    });
+
+    // Get the dimensions of the generated datamatrix
+    const dmWidth = canvas.width;
+    const dmHeight = canvas.height;
+
+    // Size for the entire datamatrix on the receipt
+    const displaySize = 150;
+
+    // Center position
+    const startX = (canvasWidth - displaySize) / 2;
+
+    // Draw the complete datamatrix (scannable)
+    ctx.drawImage(
+      canvas,
+      0, 0, dmWidth, dmHeight, // source - entire datamatrix
+      startX, y, displaySize, displaySize // destination - centered
+    );
+
+    // Draw a black cross overlay to visually divide into 4 segments
+    // without actually breaking the datamatrix pattern underneath
+    ctx.fillStyle = 'black';
+    const crossWidth = 2; // Width of the cross lines
+    const halfSize = displaySize / 2;
+
+    // Vertical line of the cross (center)
+    ctx.fillRect(startX + halfSize - crossWidth / 2, y, crossWidth, displaySize);
+    // Horizontal line of the cross (center)
+    ctx.fillRect(startX, y + halfSize - crossWidth / 2, displaySize, crossWidth);
+  } catch (error) {
+    console.error('Error generating datamatrix:', error);
+    // Fallback: draw error message
+    ctx.font = '12px monospace';
+    ctx.fillStyle = 'red';
+    ctx.textAlign = 'center';
+    ctx.fillText('Error generating datamatrix', canvasWidth / 2, y + 20);
+  }
 }
 
