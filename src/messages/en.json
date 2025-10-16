@@ -3,6 +3,7 @@
   "subtitle": "Generate and download thermal receipt images (384px width)",
   "livePreview": "Live Preview",
   "downloadReceipt": "Download Receipt",
+  "shareReceipt": "Share Receipt",
   "customizeReceipt": "Customize Receipt",
   "storeInformation": "Store Information",
   "storeName": "Store Name",

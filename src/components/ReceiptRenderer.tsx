@@ -56,20 +56,28 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
 
   return (
     <div className="flex flex-col items-center gap-8">
-    
-        <canvas 
+
+        <canvas
           ref={canvasRef}
           className=" shadow-lg"
           style={{ maxWidth: '100%', height: 'auto' }}
         />
-      
+
       {isRendered && (
-        <Button
-          onClick={downloadReceipt}
-          className="w-full backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-12 text-lg font-light tracking-wide transition-all duration-200"
-        >
-          {t('downloadReceipt')}
-        </Button>
+        <div className="w-full grid grid-cols-2 gap-4">
+          <Button
+            onClick={downloadReceipt}
+            className="backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-12 text-lg font-light tracking-wide transition-all duration-200"
+          >
+            {t('downloadReceipt')}
+          </Button>
+          <Button
+            onClick={shareReceipt}
+            className="backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-12 text-lg font-light tracking-wide transition-all duration-200"
+          >
+            {t('shareReceipt')}
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -81,6 +89,46 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
     link.download = `receipt-${receiptData.receiptNumber}.png`;
     link.href = canvasRef.current.toDataURL();
     link.click();
+  }
+
+  async function shareReceipt() {
+    if (!canvasRef.current) return;
+
+    try {
+      // Convert canvas to blob
+      canvasRef.current.toBlob(async (blob) => {
+        if (!blob) return;
+
+        const file = new File([blob], `receipt-${receiptData.receiptNumber}.png`, {
+          type: 'image/png',
+        });
+
+        // Check if Web Share API is supported
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: `Receipt #${receiptData.receiptNumber}`,
+              text: `Receipt from ${receiptData.storeName}`,
+              files: [file],
+            });
+          } catch (error) {
+            // User cancelled or error occurred
+            if ((error as Error).name !== 'AbortError') {
+              console.error('Error sharing:', error);
+              // Fallback to download
+              downloadReceipt();
+            }
+          }
+        } else {
+          // Fallback to download if share is not supported
+          downloadReceipt();
+        }
+      });
+    } catch (error) {
+      console.error('Error preparing share:', error);
+      // Fallback to download
+      downloadReceipt();
+    }
   }
 }
 
