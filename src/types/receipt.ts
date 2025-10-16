@@ -21,6 +21,8 @@ export interface ReceiptData {
   paymentMethod: string;
   receiptNumber: string;
   date: string;
+  dateTextFlag: boolean;
+  time: string;
   datamatrixCode: string;
   datamatrixSize: number;
   fiscalLogoSize: number;

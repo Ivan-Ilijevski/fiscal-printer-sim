@@ -342,6 +342,42 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date" className="text-gray-700/90 font-medium text-xs">Date</Label>
+              <Input
+                id="date"
+                type="text"
+                value={formData.date}
+                onChange={(e) => updateStoreInfo('date', e.target.value)}
+                className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 placeholder:text-gray-500/60 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="time" className="text-gray-700/90 font-medium text-xs">Time</Label>
+              <Input
+                id="time"
+                type="text"
+                value={formData.time}
+                onChange={(e) => updateStoreInfo('time', e.target.value)}
+                placeholder="HH:MM:SS"
+                className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 placeholder:text-gray-500/60 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dateTextFlag" className="text-gray-700/90 font-medium text-xs">Show "ДАТУМ" Label</Label>
+              <div className="flex items-center h-11">
+                <input
+                  id="dateTextFlag"
+                  type="checkbox"
+                  checked={formData.dateTextFlag}
+                  onChange={(e) => updateFormData({ dateTextFlag: e.target.checked })}
+                  className="w-5 h-5 rounded border-white/40 bg-white/30 text-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 cursor-pointer"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

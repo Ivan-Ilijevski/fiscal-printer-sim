@@ -116,7 +116,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   ctx.fillText(`#${data.receiptNumber}`, width / 2, y);
   y += data.headerFontSpacing;
 
-  ctx.font = `bold ${data.bodyFontSize}px monospace`;
+  ctx.font = `${data.bodyFontSize}px monospace`;
   ctx.fillText(data.storeName, width / 2, y);
   y += data.bodyFontSpacing;
   ctx.fillText(data.address, width / 2, y);
@@ -261,7 +261,15 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
     render2x2Datamatrix(ctx, data.datamatrixCode, data.datamatrixSize, width, y);
   }
 
-  y += data.datamatrixSize + 10;
+  y += data.datamatrixSize + data.bodyFontSpacing;
+
+  ctx.fillText(`0035120`, padding, y);
+  ctx.textAlign = 'center';
+  ctx.fillText(`${data.dateTextFlag ? 'ДАТУМ ' : ''}${data.date}`, width / 2, y);
+  ctx.textAlign = 'right';
+
+  ctx.fillText(`${data.time}`, width - padding, y);
+  y += data.bodyFontSpacing/2;
 
   // Render fiscal logo if image is loaded
   if (logoImage) {
@@ -272,12 +280,21 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
     ctx.drawImage(logoImage, padding, y, logoWidth, logoHeight);
   }
 
-  y += (data.fiscalLogoSize / (2120 / 981)) + 20;
+  y += (data.fiscalLogoSize / (2120 / 981))/2 ;
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.font = `bold ${data.bodyFontSize + 2}px monospace`;
+  ctx.fillText('АС456784334', width - padding - 20, y - data.bodyFontSpacing/4);
+  ctx.textBaseline = 'top';
+  ctx.fillText('АС564323389', width - padding - 20, y + data.bodyFontSpacing/4);
+
+  y += (data.fiscalLogoSize / (2120 / 981))/2 + data.headerFontSpacing;
 
 
   ctx.textAlign = 'center';
-
-  ctx.font = 'bold 20px monospace';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `bold ${data.headerFontSize}px "Courier New", monospace`;
   ctx.fillText(data.receiptType, width / 2, y);
   y += 20;
 
