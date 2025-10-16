@@ -19,6 +19,14 @@ export const metadata: Metadata = {
   description: "Generate thermal receipt images",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover", // This enables safe-area-inset on iOS
+};
+
 export default async function LocaleLayout({
   children,
   params
@@ -34,9 +42,10 @@ export default async function LocaleLayout({
   const messages = await getMessages({ locale });
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className="overflow-x-hidden">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden overscroll-none bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50`}
+        style={{ overscrollBehavior: 'none' }}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}

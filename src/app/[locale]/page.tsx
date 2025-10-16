@@ -29,7 +29,7 @@ const defaultReceiptData: ReceiptData = {
   dateTextFlag: false,
   time: new Date().toLocaleTimeString('mk-MK', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh',
-  datamatrixSize: 150,
+  datamatrixSize: 197,
   fiscalLogoSize: 200,
   headerFontSize: 37,
   headerFontSpacing: 35,
@@ -42,7 +42,7 @@ export default function Home() {
   const t = useTranslations();
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen-safe relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       {/* iOS-style liquid glass gradient background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Multi-layer gradient mesh */}
@@ -96,7 +96,7 @@ export default function Home() {
                 <div className="relative backdrop-blur-xl bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08)] p-10 rounded-[28px] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] hover:bg-white/45 hover:scale-[1.002]">
                   {/* Inner shadow for depth */}
                   <div className="absolute inset-0 rounded-[28px] shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)]" />
-                  <div className="relative max-h-[calc(100vh-12rem)] overflow-y-auto">
+                  <div className="relative max-h-[calc(100dvh-16rem)] overflow-y-auto scrollbar-hide native-scroll">
                     <ReceiptRenderer receiptData={receiptData} />
                   </div>
                 </div>
