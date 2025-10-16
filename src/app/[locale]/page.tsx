@@ -26,7 +26,13 @@ const defaultReceiptData: ReceiptData = {
   paymentMethod: 'ВО ГОТОВО',
   receiptNumber: '0012',
   date: new Date().toLocaleDateString(),
-  datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh'
+  datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh',
+  datamatrixSize: 150,
+  fiscalLogoSize: 200,
+  headerFontSize: 30,
+  headerFontSpacing: 30,
+  bodyFontSize: 20,
+  bodyFontSpacing: 20
 };
 
 export default function Home() {

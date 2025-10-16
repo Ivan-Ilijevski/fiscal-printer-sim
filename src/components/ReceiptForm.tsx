@@ -24,7 +24,10 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
   };
 
   const updateStoreInfo = (field: string, value: string) => {
-    updateFormData({ [field]: value });
+    // Convert numeric fields to numbers
+    const numericFields = ['datamatrixSize', 'fiscalLogoSize', 'headerFontSize', 'headerFontSpacing', 'bodyFontSize', 'bodyFontSpacing'];
+    const processedValue = numericFields.includes(field) ? Number(value) : value;
+    updateFormData({ [field]: processedValue });
   };
 
   const updateItem = (index: number, field: keyof ReceiptItem, value: string | number | boolean) => {
@@ -191,10 +194,153 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                 type="text"
                 value={formData.datamatrixCode}
                 onChange={(e) => updateStoreInfo('datamatrixCode', e.target.value)}
-                placeholder="Enter 4 characters (e.g., ABCD)"
-                maxLength={4}
+                placeholder="Enter text for datamatrix"
                 className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 placeholder:text-gray-500/60 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="datamatrixSize" className="text-gray-700/90 font-medium text-xs">Datamatrix Size (px)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="datamatrixSize"
+                  type="range"
+                  min="50"
+                  max="300"
+                  step="10"
+                  value={formData.datamatrixSize}
+                  onChange={(e) => updateStoreInfo('datamatrixSize', e.target.value)}
+                  className="flex-1 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <Input
+                  type="number"
+                  min="50"
+                  max="300"
+                  value={formData.datamatrixSize}
+                  onChange={(e) => updateStoreInfo('datamatrixSize', e.target.value)}
+                  className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fiscalLogoSize" className="text-gray-700/90 font-medium text-xs">Fiscal Logo Size (px)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="fiscalLogoSize"
+                  type="range"
+                  min="50"
+                  max="384"
+                  step="10"
+                  value={formData.fiscalLogoSize}
+                  onChange={(e) => updateStoreInfo('fiscalLogoSize', e.target.value)}
+                  className="flex-1 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <Input
+                  type="number"
+                  min="50"
+                  max="384"
+                  value={formData.fiscalLogoSize}
+                  onChange={(e) => updateStoreInfo('fiscalLogoSize', e.target.value)}
+                  className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="headerFontSize" className="text-gray-700/90 font-medium text-xs">Header Font Size (px)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="headerFontSize"
+                  type="range"
+                  min="10"
+                  max="50"
+                  step="1"
+                  value={formData.headerFontSize}
+                  onChange={(e) => updateStoreInfo('headerFontSize', e.target.value)}
+                  className="flex-1 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <Input
+                  type="number"
+                  min="10"
+                  max="50"
+                  value={formData.headerFontSize}
+                  onChange={(e) => updateStoreInfo('headerFontSize', e.target.value)}
+                  className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="headerFontSpacing" className="text-gray-700/90 font-medium text-xs">Header Line Spacing (px)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="headerFontSpacing"
+                  type="range"
+                  min="5"
+                  max="50"
+                  step="1"
+                  value={formData.headerFontSpacing}
+                  onChange={(e) => updateStoreInfo('headerFontSpacing', e.target.value)}
+                  className="flex-1 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <Input
+                  type="number"
+                  min="5"
+                  max="50"
+                  value={formData.headerFontSpacing}
+                  onChange={(e) => updateStoreInfo('headerFontSpacing', e.target.value)}
+                  className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bodyFontSize" className="text-gray-700/90 font-medium text-xs">Body Font Size (px)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="bodyFontSize"
+                  type="range"
+                  min="10"
+                  max="50"
+                  step="1"
+                  value={formData.bodyFontSize}
+                  onChange={(e) => updateStoreInfo('bodyFontSize', e.target.value)}
+                  className="flex-1 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <Input
+                  type="number"
+                  min="10"
+                  max="50"
+                  value={formData.bodyFontSize}
+                  onChange={(e) => updateStoreInfo('bodyFontSize', e.target.value)}
+                  className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bodyFontSpacing" className="text-gray-700/90 font-medium text-xs">Body Line Spacing (px)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="bodyFontSpacing"
+                  type="range"
+                  min="5"
+                  max="50"
+                  step="1"
+                  value={formData.bodyFontSpacing}
+                  onChange={(e) => updateStoreInfo('bodyFontSpacing', e.target.value)}
+                  className="flex-1 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <Input
+                  type="number"
+                  min="5"
+                  max="50"
+                  value={formData.bodyFontSpacing}
+                  onChange={(e) => updateStoreInfo('bodyFontSpacing', e.target.value)}
+                  className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -22,4 +22,10 @@ export interface ReceiptData {
   receiptNumber: string;
   date: string;
   datamatrixCode: string;
+  datamatrixSize: number;
+  fiscalLogoSize: number;
+  bodyFontSize: number;
+  headerFontSize: number;
+  headerFontSpacing: number;
+  bodyFontSpacing: number;
 }

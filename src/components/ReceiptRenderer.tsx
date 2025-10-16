@@ -15,7 +15,20 @@ interface ReceiptRendererProps {
 export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
+  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const t = useTranslations();
+
+  // Preload the fiscal logo image
+  useEffect(() => {
+    const img = new window.Image();
+    img.src = '/fiscalLogo.png';
+    img.onload = () => {
+      setLogoImage(img);
+    };
+    img.onerror = () => {
+      console.error('Failed to load fiscal logo');
+    };
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -26,20 +39,20 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
 
     const width = 384;
     const height = calculateReceiptHeight(receiptData);
-    
+
     canvas.width = width;
     canvas.height = height;
 
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
 
-    renderReceipt(ctx, receiptData, width);
+    renderReceipt(ctx, receiptData, width, logoImage);
     setIsRendered(true);
-    
+
     if (onCanvasReady) {
       onCanvasReady(canvas);
     }
-  }, [receiptData, onCanvasReady]);
+  }, [receiptData, onCanvasReady, logoImage]);
 
   return (
     <div className="flex flex-col items-center gap-8">
@@ -72,38 +85,47 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
 }
 
 function calculateReceiptHeight(data: ReceiptData): number {
-  const headerHeight = 120;
-  const itemHeight = 20;
-  const itemsHeight = data.items.length * itemHeight;
-  const footerHeight = 600;
-  const padding = 40;
-  
-  return headerHeight + itemsHeight + footerHeight + padding;
+  // Header: receipt type + number + store info (4 lines)
+  const headerHeight = (data.headerFontSpacing * 2) + (data.bodyFontSpacing * 3) + 60;
+
+  // Items
+  const itemsHeight = data.items.length * data.bodyFontSpacing;
+
+  // VAT sections and totals (approximately 15-20 lines)
+  const vatSectionHeight = data.bodyFontSpacing * 20;
+
+  // Datamatrix and logo
+  const datamatrixHeight = data.datamatrixCode ? data.datamatrixSize + 10 : 0;
+  const logoHeight = data.fiscalLogoSize ? (data.fiscalLogoSize / (2120 / 981)) + 20 : 0;
+
+  const padding = 60;
+
+  return headerHeight + itemsHeight + vatSectionHeight + datamatrixHeight + logoHeight + padding;
 }
 
-function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: number) {
+function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: number, logoImage: HTMLImageElement | null) {
   const padding = 0;
-  let y = 20;
+  let y = data.headerFontSize + 10; // Start with enough space for first line
 
   ctx.fillStyle = 'black';
   ctx.textAlign = 'center';
 
-  ctx.font = 'bold 20px monospace';
+  ctx.font = `bold ${data.headerFontSize}px "Courier New", monospace`;
   ctx.fillText(data.receiptType, width / 2, y);
-  y += 20;
+  y += data.headerFontSpacing;
   ctx.fillText(`#${data.receiptNumber}`, width / 2, y);
-  y += 16;
+  y += data.headerFontSpacing;
 
-  ctx.font = '18px monospace';
+  ctx.font = `bold ${data.bodyFontSize}px monospace`;
   ctx.fillText(data.storeName, width / 2, y);
-  y += 18;
+  y += data.bodyFontSpacing;
   ctx.fillText(data.address, width / 2, y);
-  y += 18;
+  y += data.bodyFontSpacing;
   ctx.fillText(`ДАН.БРОЈ: ${data.taxNumber}`, width / 2, y);
-  y += 16;
+  y += data.bodyFontSpacing;
   ctx.fillText(`ДДВ БРОЈ: ${data.vatNumber}`, width / 2, y);
-  y += 30;
-  
+  y += data.bodyFontSpacing + 10;
+
 
   ctx.textAlign = 'left';
 
@@ -118,12 +140,12 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
     ctx.textAlign = 'right';
     ctx.fillText(priceText, width - padding, y);
     ctx.textAlign = 'left';
-    y += 20;
+    y += data.bodyFontSpacing;
   });
 
   {/* Промет од македонски производи */}
-  ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
-  y += 20;
+  ctx.fillText("- - - - - - - - - - - - - - - -", padding, y);
+  y += data.bodyFontSpacing;
   //18
   
 
@@ -133,47 +155,45 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   const dVatG = calculateDomesticVAT(data, 'G');
 
 
-  ctx.font = '18px monospace';
+  ctx.font = `${data.bodyFontSize}px monospace`;
   ctx.fillText(`ПРОМЕТ ОД МАКЕДОНСКИ ПР.`,padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
-  y += 20;
-
-  ctx.font = '18px monospace';
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ А=${data.vatTypeA.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(dVatA.toFixed(2).replace('.', ','), width - padding, y);
-  y += 18;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ Б=${data.vatTypeB.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(dVatB.toFixed(2).replace('.', ','), width - padding, y);
-  y += 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ В=${data.vatTypeV.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(dVatV.toFixed(2).replace('.', ','), width - padding, y);
-  y += 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ Г=${data.vatTypeG.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(dVatG.toFixed(2).replace('.', ','), width - padding, y);
-  y+= 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText((dVatA + dVatB + dVatV + dVatG).toFixed(2).replace('.', ','), width - padding, y);
-  y += 25;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
-  ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
-  y += 20;
+  ctx.fillText("- - - - - - - - - - - - - - - - -", padding, y);
+  y += data.bodyFontSpacing;
   //18
   
 
@@ -183,67 +203,87 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   const vatG = calculateVAT(data, 'G');
 
 
-  ctx.font = 'bold 18px monospace';
+  ctx.font = `bold ${data.bodyFontSize}px monospace`;
   ctx.fillText(`ВКУПЕН ПРОМЕТ`,padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
-  y += 20;
+  y += data.bodyFontSpacing;
 
-  ctx.font = '18px monospace';
+  ctx.font = `${data.bodyFontSize}px monospace`;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText((vatA + vatB + vatV + vatG).toFixed(2).replace('.', ','), width - padding, y);
-  y += 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ А=${data.vatTypeA.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(vatA.toFixed(2).replace('.', ','), width - padding, y);
-  y += 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ Б=${data.vatTypeB.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(vatB.toFixed(2).replace('.', ','), width - padding, y);
-  y += 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ В=${data.vatTypeV.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(vatV.toFixed(2).replace('.', ','), width - padding, y);
-  y += 16;
+  y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ Г=${data.vatTypeG.toFixed(2).replace('.', ',')}%`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(vatG.toFixed(2).replace('.', ','), width - padding, y);
-  y += 30;
+  y += data.bodyFontSpacing;
 
-  ctx.font = '18px monospace';
   ctx.textAlign = 'left';
   ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
-  y += 20;
+  y += data.bodyFontSpacing;
 
   // ctx.font = '12px monospace';
   // ctx.textAlign = 'center';
   ctx.fillText('ВИ БЛАГОДАРИМЕ!', padding, y);
-  y += 20;
+  y += data.bodyFontSpacing ;
   ctx.fillText(`${data.paymentMethod}`, padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
-  y += 10;
+  y += data.bodyFontSpacing/2;
   ctx.textAlign = 'left';
   
 
   // Render 2x2 datamatrix
   if (data.datamatrixCode) {
-    render2x2Datamatrix(ctx, data.datamatrixCode, width, y);
+    render2x2Datamatrix(ctx, data.datamatrixCode, data.datamatrixSize, width, y);
   }
+
+  y += data.datamatrixSize + 10;
+
+  // Render fiscal logo if image is loaded
+  if (logoImage) {
+    // Original image dimensions: 2120 x 981
+    const aspectRatio = 2120 / 981;
+    const logoWidth = data.fiscalLogoSize;
+    const logoHeight = data.fiscalLogoSize / aspectRatio;
+    ctx.drawImage(logoImage, padding, y, logoWidth, logoHeight);
+  }
+
+  y += (data.fiscalLogoSize / (2120 / 981)) + 20;
+
+
+  ctx.textAlign = 'center';
+
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText(data.receiptType, width / 2, y);
+  y += 20;
+
 }
 
-function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, canvasWidth: number, y: number) {
+function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, displaySize: number, canvasWidth: number, y: number) {
   try {
     // Generate the full datamatrix using bwip-js
     const canvas = document.createElement('canvas');
@@ -257,9 +297,6 @@ function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, canvas
     // Get the dimensions of the generated datamatrix
     const dmWidth = canvas.width;
     const dmHeight = canvas.height;
-
-    // Size for the entire datamatrix on the receipt
-    const displaySize = 150;
 
     // Center position
     const startX = (canvasWidth - displaySize) / 2;
@@ -288,6 +325,9 @@ function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, canvas
     ctx.fillStyle = 'red';
     ctx.textAlign = 'center';
     ctx.fillText('Error generating datamatrix', canvasWidth / 2, y + 20);
+    
   }
+    
+
 }
 
