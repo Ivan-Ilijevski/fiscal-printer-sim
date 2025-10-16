@@ -367,7 +367,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dateTextFlag" className="text-gray-700/90 font-medium text-xs">Show "ДАТУМ" Label</Label>
+              <Label htmlFor="dateTextFlag" className="text-gray-700/90 font-medium text-xs">Show &quot;ДАТУМ&quot; Label</Label>
               <div className="flex items-center h-11">
                 <input
                   id="dateTextFlag"
