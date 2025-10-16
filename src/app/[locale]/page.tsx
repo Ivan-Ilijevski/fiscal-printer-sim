@@ -31,10 +31,10 @@ const defaultReceiptData: ReceiptData = {
   datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh',
   datamatrixSize: 150,
   fiscalLogoSize: 200,
-  headerFontSize: 30,
-  headerFontSpacing: 30,
-  bodyFontSize: 20,
-  bodyFontSpacing: 20
+  headerFontSize: 37,
+  headerFontSpacing: 35,
+  bodyFontSize: 22,
+  bodyFontSpacing: 25
 };
 
 export default function Home() {

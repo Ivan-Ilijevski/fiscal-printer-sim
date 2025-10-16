@@ -98,7 +98,7 @@ function calculateReceiptHeight(data: ReceiptData): number {
   const datamatrixHeight = data.datamatrixCode ? data.datamatrixSize + 10 : 0;
   const logoHeight = data.fiscalLogoSize ? (data.fiscalLogoSize / (2120 / 981)) + 20 : 0;
 
-  const padding = 60;
+  const padding = 100;
 
   return headerHeight + itemsHeight + vatSectionHeight + datamatrixHeight + logoHeight + padding;
 }
@@ -132,11 +132,16 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   
 
   data.items.forEach(item => {
-    const itemLine = `${item.quantity}x ${item.name}`;
+    const itemLine = `${item.quantity} x ${item.price.toFixed(2).replace('.', ',')}  `;
     const totalPrice = item.price * item.quantity;
     const priceText = `${totalPrice.toFixed(2).replace('.', ',')} ${item.vatType==='A'?'А':item.vatType==='B'?'Б':item.vatType==='V'?'В':'Г'}`;
     // си имаат две линии за текст ако има повеќе артикли
-    ctx.fillText(itemLine, padding, y);
+    ctx.textAlign = 'right';
+    ctx.fillText(itemLine, width - padding, y);
+    y+= data.bodyFontSpacing;
+    ctx.textAlign = 'left';
+
+    ctx.fillText(`${item.name}`, padding, y);
     ctx.textAlign = 'right';
     ctx.fillText(priceText, width - padding, y);
     ctx.textAlign = 'left';
@@ -158,7 +163,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   ctx.font = `${data.bodyFontSize}px monospace`;
   ctx.fillText(`ПРОМЕТ ОД МАКЕДОНСКИ ПР.`,padding, y);
   ctx.textAlign = 'right';
-  ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
+  ctx.fillText((dVatA + dVatB + dVatV + dVatG).toFixed(2).replace('.', ','), width - padding, y);
   y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
@@ -242,7 +247,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
-  ctx.fillText("- - - - - - - - - - - - - - - - - -", padding, y);
+  ctx.fillText("--------------------------------", padding, y);
   y += data.bodyFontSpacing;
 
   // ctx.font = '12px monospace';
@@ -296,7 +301,12 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   ctx.textBaseline = 'alphabetic';
   ctx.font = `bold ${data.headerFontSize}px "Courier New", monospace`;
   ctx.fillText(data.receiptType, width / 2, y);
-  y += 20;
+
+  y += data.bodyFontSpacing * 2;
+  ctx.textAlign = 'left';
+  ctx.font = `${data.bodyFontSize}px monospace`;
+  ctx.fillText("--------------------------------", padding, y);
+  
 
 }
 

@@ -96,42 +96,112 @@ interface ReceiptData {
   address: string;
   taxNumber: string;
   vatNumber: string;
-  
+
   // Transaction data
   items: ReceiptItem[];
-  vatTypeA: number;  // 18% VAT amount in dollars
-  vatTypeB: number;  // 5% VAT amount in dollars
-  vatTypeV: number;  // 0% VAT amount in dollars
-  vatTypeG: number;  // 0% VAT amount in dollars
+  vatTypeA: number;  // 18% VAT rate percentage
+  vatTypeB: number;  // 5% VAT rate percentage
+  vatTypeV: number;  // 0% VAT rate percentage
+  vatTypeG: number;  // 0% VAT rate percentage
   total: number;     // Tax-inclusive total
-  
+
   // Receipt metadata
   paymentMethod: string;
   receiptNumber: string;
-  date: string;
+  date: string;      // Date in DD-MM-YYYY format
+  dateTextFlag: boolean;  // Show/hide "ДАТУМ" label before date
+  time: string;      // Time in HH:MM:SS format
+
+  // Data matrix barcode
+  datamatrixCode: string;  // Content for data matrix barcode
+  datamatrixSize: number;  // Display size in pixels
+
+  // Fiscal logo
+  fiscalLogoSize: number;  // Logo width in pixels
+
+  // Typography settings
+  headerFontSize: number;     // Header font size in pixels
+  headerFontSpacing: number;  // Header line spacing in pixels
+  bodyFontSize: number;       // Body font size in pixels
+  bodyFontSpacing: number;    // Body line spacing in pixels
 }
 ```
 
 ### Form Integration
-The `ReceiptForm` component:
-- Automatically recalculates VAT when item totals change
-- Displays all four VAT types in the totals summary
-- Updates VAT Type A based on current 18% rate
-- Maintains other VAT types as set values
+The `ReceiptForm` component provides comprehensive controls for:
+- **Store Information**: Company name, address, tax numbers, receipt number
+- **Payment Details**: Payment method selection (cash, credit, debit, mobile)
+- **Date & Time Controls**:
+  - Date field with DD-MM-YYYY format
+  - Time field with HH:MM:SS format
+  - Toggle for "ДАТУМ" label visibility
+- **Item Management**:
+  - Add/remove items dynamically
+  - Set quantity, price, VAT type (А/Б/В/Г)
+  - Mark items as domestic products
+  - Automatic total calculation
+- **VAT Display**: Shows all four VAT types in the totals summary
+- **Data Matrix Barcode**: Text input and size control (50-300px slider)
+- **Fiscal Logo**: Size control (50-384px slider)
+- **Typography Controls**:
+  - Header font size (10-50px) and line spacing (5-50px)
+  - Body font size (10-50px) and line spacing (5-50px)
 
 ### Receipt Display
 The `ReceiptRenderer` component:
-- Shows only VAT types with values > 0
-- Formats VAT amounts as "VAT A: $X.XX"
-- Displays VAT types in Macedonian Cyrillic characters (А, Б, В, Г) on receipt items
-- Positions VAT information between items and total
-- Maintains proper fiscal receipt formatting
+- **Canvas Rendering**: Uses HTML5 Canvas API to generate receipt image at 384px width
+- **Dynamic Height**: Automatically calculates canvas height based on content
+- **Receipt Elements**:
+  - Header with receipt type and number in bold Courier New font
+  - Store information and tax numbers
+  - Itemized list with quantities, prices, and VAT type indicators (А/Б/В/Г)
+  - Domestic products VAT breakdown (ПРОМЕТ ОД МАКЕДОНСКИ ПР.)
+  - Total VAT calculations for all types
+  - Grand total (ВКУПЕН ПРОМЕТ)
+  - Payment method and amount
+  - 2x2 Data matrix barcode with visual cross overlay (scannable)
+  - Date and time display with optional "ДАТУМ" label
+  - Fiscal verification logo
+  - Verification codes
+- **Formatting**:
+  - Macedonian Cyrillic characters for labels
+  - Right-aligned prices with comma decimal separator
+  - Dash separators between sections
+- **Live Preview**: Updates in real-time as form data changes
+- **Download**: PNG export functionality with filename based on receipt number
+- **Scrollable**: Preview container scrolls to view full receipt on long receipts
+
+## Internationalization
+
+The application supports multiple languages using `next-intl`:
+- **Supported Locales**: English (en), Macedonian (mk)
+- **Default Locale**: English
+- **Language Switcher**: Component in top-right corner for easy locale switching
+- **Middleware**: Handles locale routing at `/[locale]/` paths
+- **Translation Files**: Located in `messages/` directory (en.json, mk.json)
+
+## Utility Functions
+
+### VAT Calculations (`src/utils/VATCalc.ts`)
+- `calculateVAT(data, vatType)`: Calculates total VAT amount for a specific VAT type across all items
+- `calculateDomesticVAT(data, vatType)`: Calculates VAT amount for domestic products only
+- Both functions return tax-inclusive amounts rounded to 2 decimal places
+
+### Styling Utilities (`src/lib/utils.ts`)
+- `cn()`: Utility for merging Tailwind CSS classes using clsx and tailwind-merge
 
 ## Important Notes
 
 - Canvas width is fixed at 384px to match thermal printer resolution
-- Uses `'use client'` directive for canvas components due to client-side rendering requirements
-- Form state drives live preview updates
+- Canvas height dynamically adjusts based on receipt content
+- Uses `'use client'` directive for canvas and form components (client-side rendering)
+- Form state drives live preview updates in real-time
 - Download functionality uses HTML5 canvas `toDataURL()` method
 - VAT calculations assume tax-inclusive pricing model
+- Date format: DD-MM-YYYY (using dash separators)
+- Time format: HH:MM:SS (24-hour format)
+- Decimal separator: Comma (,) for currency display on receipts
+- Receipt preview is scrollable when content exceeds viewport height
+- Data matrix barcode uses `bwip-js` library for generation
+- Fiscal logo aspect ratio: 2120:981 (original image dimensions)
 - Project intended for fair use only (as noted in README)
