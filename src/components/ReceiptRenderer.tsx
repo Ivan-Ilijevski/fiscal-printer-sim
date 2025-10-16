@@ -6,6 +6,7 @@ import { ReceiptData } from '@/types/receipt';
 import { calculateDomesticVAT, calculateVAT } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
 import bwipjs from 'bwip-js';
+import { wrap } from 'module';
 
 interface ReceiptRendererProps {
   receiptData: ReceiptData;
@@ -153,6 +154,10 @@ function calculateReceiptHeight(data: ReceiptData): number {
 
 function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: number, logoImage: HTMLImageElement | null) {
   const padding = 0;
+  
+  const maxCharactersPerLine = Math.floor((width - 2 * padding) / (data.bodyFontSize * 0.6));
+  console.log('Max chars per line:', maxCharactersPerLine);
+
   let y = data.headerFontSize + 10; // Start with enough space for first line
 
   ctx.fillStyle = 'black';
@@ -180,16 +185,30 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   
 
   data.items.forEach(item => {
+    const itemNameLineB = item.name.length > 30 ? item.name.slice(30) : '';
     const itemLine = `${item.quantity} x ${item.price.toFixed(2).replace('.', ',')}  `;
     const totalPrice = item.price * item.quantity;
     const priceText = `${totalPrice.toFixed(2).replace('.', ',')} ${item.vatType==='A'?'А':item.vatType==='B'?'Б':item.vatType==='V'?'В':'Г'}`;
     // си имаат две линии за текст ако има повеќе артикли
+
     ctx.textAlign = 'right';
     ctx.fillText(itemLine, width - padding, y);
     y+= data.bodyFontSpacing;
     ctx.textAlign = 'left';
 
-    ctx.fillText(`${item.name}`, padding, y);
+    const lines = wrapTextKing(item.name, maxCharactersPerLine - itemLine.length);
+    if (countLines(lines) > 1) {
+      y -= data.bodyFontSpacing; // move back up to overwrite the first line
+    }
+
+    for(const line of lines.split('\n')) {
+      ctx.fillText(line, padding, y);
+      y += data.bodyFontSpacing;
+      
+    }
+    y-= data.bodyFontSpacing;
+
+    //ctx.fillText(`${item.name}`, padding, y);
     ctx.textAlign = 'right';
     ctx.fillText(priceText, width - padding, y);
     ctx.textAlign = 'left';
@@ -358,6 +377,18 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
 }
 
+// Dynamic Width (Build Regex)
+  function wrapTextKing(s: string, w: number): string {
+    return s.replace(
+      new RegExp(`(?![^\\n]{1,${w}}$)([^\\n]{1,${w}})\\s`, 'g'), '$1\n'
+    );
+  }
+
+  function countLines(text: string): number {
+    return text.split(/\r?\n/).length;
+  }
+
+
 function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, displaySize: number, canvasWidth: number, y: number) {
   try {
     // Generate the full datamatrix using bwip-js
@@ -402,7 +433,58 @@ function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, displa
     ctx.fillText('Error generating datamatrix', canvasWidth / 2, y + 20);
     
   }
-    
-
 }
 
+  function wrapTextWithCharLimit(text: string, maxChars: number): string[] {
+    // Handle empty input
+    if (!text) return [];
+
+    const lines: string[] = [];
+
+    // Split by existing line breaks to preserve paragraphs
+    const paragraphs = text.split(/\r?\n/);
+
+    for (let p of paragraphs) {
+      // Trim trailing/leading spaces but preserve intentional single-space words
+      p = p.trim();
+
+      if (p.length === 0) {
+        // Preserve empty line as an empty string
+        lines.push('');
+        continue;
+      }
+
+      const words = p.split(/\s+/);
+      let currentLine = '';
+
+      for (const word of words) {
+        // If the word itself is longer than maxChars, break the word
+        if (word.length > maxChars) {
+          // flush current line first
+          if (currentLine.length > 0) {
+            lines.push(currentLine);
+            currentLine = '';
+          }
+
+          // break long word into chunks of maxChars
+          for (let i = 0; i < word.length; i += maxChars) {
+            lines.push(word.slice(i, i + maxChars));
+          }
+          continue;
+        }
+
+        // If adding the word would exceed the limit, push currentLine and start new
+        if ((currentLine.length ? currentLine.length + 1 : 0) + word.length > maxChars) {
+          if (currentLine.length > 0) lines.push(currentLine);
+          currentLine = word;
+        } else {
+          // append word to current line
+          currentLine = currentLine.length ? `${currentLine} ${word}` : word;
+        }
+      }
+
+      if (currentLine.length > 0) lines.push(currentLine);
+    }
+
+    return lines;
+  }       

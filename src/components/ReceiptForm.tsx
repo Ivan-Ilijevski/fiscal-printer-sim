@@ -413,13 +413,13 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                 <div className="space-y-6">
                   <div className="space-y-3">
                     <Label htmlFor={`itemName-${index}`} className="text-slate-600 font-light text-sm">{t('itemName')}</Label>
-                    <Input
+                    <textarea
                       id={`itemName-${index}`}
-                      type="text"
                       placeholder={t('itemName')}
                       value={item.name}
                       onChange={(e) => updateItem(index, 'name', e.target.value)}
-                      className="backdrop-blur-md bg-white/10 border border-white/20 text-slate-700 placeholder:text-slate-500 h-12 focus:bg-white/15 focus:border-white/30 transition-all duration-200"
+                      rows={3}
+                      className="w-full backdrop-blur-md bg-white/10 border border-white/20 text-slate-700 placeholder:text-slate-500 px-3 py-2 rounded-md focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 resize-y"
                     />
                   </div>
                   
