@@ -42,10 +42,9 @@ export default async function LocaleLayout({
   const messages = await getMessages({ locale });
 
   return (
-    <html lang={locale} className="overflow-x-hidden">
+    <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden overscroll-none bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50`}
-        style={{ overscrollBehavior: 'none' }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}

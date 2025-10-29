@@ -124,6 +124,7 @@ interface ReceiptData {
   headerFontSpacing: number;  // Header line spacing in pixels
   bodyFontSize: number;       // Body font size in pixels
   bodyFontSpacing: number;    // Body line spacing in pixels
+  fontFamily: string;         // Font family for receipt text
 }
 ```
 
@@ -146,13 +147,14 @@ The `ReceiptForm` component provides comprehensive controls for:
 - **Typography Controls**:
   - Header font size (10-50px) and line spacing (5-50px)
   - Body font size (10-50px) and line spacing (5-50px)
+  - Font family selection (Courier New, Monospace, Arial, Times New Roman, Consolas, Monaco, Lucida Console)
 
 ### Receipt Display
 The `ReceiptRenderer` component:
 - **Canvas Rendering**: Uses HTML5 Canvas API to generate receipt image at 384px width
 - **Dynamic Height**: Automatically calculates canvas height based on content
 - **Receipt Elements**:
-  - Header with receipt type and number in bold Courier New font
+  - Header with receipt type and number in bold, using selected font family
   - Store information and tax numbers
   - Itemized list with quantities, prices, and VAT type indicators (А/Б/В/Г)
   - Domestic products VAT breakdown (ПРОМЕТ ОД МАКЕДОНСКИ ПР.)
@@ -164,6 +166,7 @@ The `ReceiptRenderer` component:
   - Fiscal verification logo
   - Verification codes
 - **Formatting**:
+  - Customizable font family applied to all text elements
   - Macedonian Cyrillic characters for labels
   - Right-aligned prices with comma decimal separator
   - Dash separators between sections
@@ -204,4 +207,5 @@ The application supports multiple languages using `next-intl`:
 - Receipt preview is scrollable when content exceeds viewport height
 - Data matrix barcode uses `bwip-js` library for generation
 - Fiscal logo aspect ratio: 2120:981 (original image dimensions)
+- **Font Customization**: Users can select from 7 different font families (Courier New, Monospace, Arial, Times New Roman, Consolas, Monaco, Lucida Console). The selected font applies to all text on the receipt including headers and body text. Default is Courier New.
 - Project intended for fair use only (as noted in README)

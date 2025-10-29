@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData } from '@/types/receipt';
 import { calculateDomesticVAT, calculateVAT } from '@/utils/VATCalc';
@@ -18,6 +18,28 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
   const [isRendered, setIsRendered] = useState(false);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const t = useTranslations();
+
+  // Memoize font metrics calculation - only recalculates when font family or size changes
+  const fontMetrics = useMemo(() => {
+    if (typeof window === 'undefined') return { maxCharactersPerLine: 32, avgCharWidth: 12 };
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return { maxCharactersPerLine: 32, avgCharWidth: 12 };
+
+    ctx.font = `${receiptData.bodyFontSize}px "${receiptData.bodyFontFamily}", monospace`;
+
+    // Measure average character width using a representative sample
+    const sampleText = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const sampleWidth = ctx.measureText(sampleText).width;
+    const avgCharWidth = sampleWidth / sampleText.length;
+
+    const width = 384;
+    const padding = 0;
+    const maxCharactersPerLine = Math.floor((width - 2 * padding) / avgCharWidth);
+
+    return { maxCharactersPerLine, avgCharWidth };
+  }, [receiptData.bodyFontFamily, receiptData.bodyFontSize]);
 
   // Preload the fiscal logo image
   useEffect(() => {
@@ -47,13 +69,13 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
 
-    renderReceipt(ctx, receiptData, width, logoImage);
+    renderReceipt(ctx, receiptData, width, logoImage, fontMetrics);
     setIsRendered(true);
 
     if (onCanvasReady) {
       onCanvasReady(canvas);
     }
-  }, [receiptData, onCanvasReady, logoImage]);
+  }, [receiptData, onCanvasReady, logoImage, fontMetrics]);
 
   return (
     <div className="flex flex-col items-center gap-8">
@@ -152,24 +174,38 @@ function calculateReceiptHeight(data: ReceiptData): number {
   return headerHeight + itemsHeight + vatSectionHeight + datamatrixHeight + logoHeight + padding;
 }
 
-function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: number, logoImage: HTMLImageElement | null) {
+function renderReceipt(
+  ctx: CanvasRenderingContext2D,
+  data: ReceiptData,
+  width: number,
+  logoImage: HTMLImageElement | null,
+  fontMetrics: { maxCharactersPerLine: number; avgCharWidth: number }
+) {
   const padding = 0;
-  
-  const maxCharactersPerLine = Math.floor((width - 2 * padding) / (data.bodyFontSize * 0.6));
-  console.log('Max chars per line:', maxCharactersPerLine);
+
+  const { maxCharactersPerLine, avgCharWidth } = fontMetrics;
+  console.log('Max chars per line:', maxCharactersPerLine, 'Avg char width:', avgCharWidth.toFixed(2));
+
+  // Helper function to create separator lines dynamically based on actual text width
+  const createSeparator = (pattern: string = '-') => {
+    ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
+    const patternWidth = ctx.measureText(pattern).width;
+    const repeatCount = Math.ceil((width - 2 * padding) / patternWidth);
+    return pattern.repeat(repeatCount);
+  };
 
   let y = data.headerFontSize + 10; // Start with enough space for first line
 
   ctx.fillStyle = 'black';
   ctx.textAlign = 'center';
 
-  ctx.font = `bold ${data.headerFontSize}px "Courier New", monospace`;
+  ctx.font = `bold ${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
   ctx.fillText(data.receiptType, width / 2, y);
   y += data.headerFontSpacing;
   ctx.fillText(`#${data.receiptNumber}`, width / 2, y);
   y += data.headerFontSpacing;
 
-  ctx.font = `${data.bodyFontSize}px monospace`;
+  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
   ctx.fillText(data.storeName, width / 2, y);
   y += data.bodyFontSpacing;
   ctx.fillText(data.address, width / 2, y);
@@ -216,7 +252,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   });
 
   {/* Промет од македонски производи */}
-  ctx.fillText("- - - - - - - - - - - - - - - -", padding, y);
+  ctx.fillText(createSeparator('- '), padding, y);
   y += data.bodyFontSpacing;
   //18
   
@@ -227,7 +263,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   const dVatG = calculateDomesticVAT(data, 'G');
 
 
-  ctx.font = `${data.bodyFontSize}px monospace`;
+  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
   ctx.fillText(`ПРОМЕТ ОД МАКЕДОНСКИ ПР.`,padding, y);
   ctx.textAlign = 'right';
   ctx.fillText((dVatA + dVatB + dVatV + dVatG).toFixed(2).replace('.', ','), width - padding, y);
@@ -264,7 +300,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
-  ctx.fillText("- - - - - - - - - - - - - - - - -", padding, y);
+  ctx.fillText(createSeparator('- '), padding, y);
   y += data.bodyFontSpacing;
   //18
   
@@ -275,13 +311,13 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   const vatG = calculateVAT(data, 'G');
 
 
-  ctx.font = `bold ${data.bodyFontSize}px monospace`;
+  ctx.font = `bold ${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
   ctx.fillText(`ВКУПЕН ПРОМЕТ`,padding, y);
   ctx.textAlign = 'right';
   ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
   y += data.bodyFontSpacing;
 
-  ctx.font = `${data.bodyFontSize}px monospace`;
+  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
 
   ctx.textAlign = 'left';
   ctx.fillText(`ВКУПНО ДДВ`, padding, y);
@@ -314,7 +350,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
   y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
-  ctx.fillText("--------------------------------", padding, y);
+  ctx.fillText(createSeparator('-'), padding, y);
   y += data.bodyFontSpacing;
 
   // ctx.font = '12px monospace';
@@ -356,7 +392,7 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
-  ctx.font = `bold ${data.bodyFontSize + 2}px monospace`;
+  ctx.font = `bold ${data.bodyFontSize + 2}px "${data.bodyFontFamily}", monospace`;
   ctx.fillText('АС456784334', width - padding - 20, y - data.bodyFontSpacing/4);
   ctx.textBaseline = 'top';
   ctx.fillText('АС564323389', width - padding - 20, y + data.bodyFontSpacing/4);
@@ -366,13 +402,13 @@ function renderReceipt(ctx: CanvasRenderingContext2D, data: ReceiptData, width: 
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `bold ${data.headerFontSize}px "Courier New", monospace`;
+  ctx.font = `bold ${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
   ctx.fillText(data.receiptType, width / 2, y);
 
   y += data.bodyFontSpacing * 2;
   ctx.textAlign = 'left';
-  ctx.font = `${data.bodyFontSize}px monospace`;
-  ctx.fillText("--------------------------------", padding, y);
+  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
+  ctx.fillText(createSeparator('-'), padding, y);
   
 
 }

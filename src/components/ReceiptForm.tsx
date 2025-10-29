@@ -17,6 +17,23 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
   const [formData, setFormData] = useState(initialData);
   const t = useTranslations();
 
+  const fontOptions = [
+    { value: 'Courier New', label: 'Courier New', family: 'Courier New, monospace' },
+    { value: 'monospace', label: 'Monospace', family: 'monospace' },
+    { value: 'Arial', label: 'Arial', family: 'Arial, sans-serif' },
+    { value: 'Arial Narrow', label: 'Arial Narrow', family: 'Arial Narrow, sans-serif' },
+    { value: 'Times New Roman', label: 'Times New Roman', family: 'Times New Roman, serif' },
+    { value: 'Consolas', label: 'Consolas', family: 'Consolas, monospace' },
+    { value: 'Monaco', label: 'Monaco', family: 'Monaco, monospace' },
+    { value: 'Lucida Console', label: 'Lucida Console', family: 'Lucida Console, monospace' },
+    { value: 'Impact', label: 'Impact', family: 'Impact, sans-serif' },
+    { value: 'Arial Black', label: 'Arial Black', family: 'Arial Black, sans-serif' },
+    { value: 'Trebuchet MS', label: 'Trebuchet MS', family: 'Trebuchet MS, sans-serif' },
+    { value: 'Verdana', label: 'Verdana', family: 'Verdana, sans-serif' },
+    { value: 'Tahoma', label: 'Tahoma', family: 'Tahoma, sans-serif' },
+    { value: 'PixelFont', label: 'PixelFont (Custom)', family: 'PixelFont, monospace' },
+  ];
+
   const updateFormData = (updates: Partial<ReceiptData>) => {
     const newData = { ...formData, ...updates };
     setFormData(newData);
@@ -341,6 +358,54 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                   className="w-20 backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bodyFontFamily" className="text-gray-700/90 font-medium text-xs">Body Font Family</Label>
+              <Select
+                value={formData.bodyFontFamily}
+                onValueChange={(value) => updateStoreInfo('bodyFontFamily', value)}
+              >
+                <SelectTrigger className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-2xl bg-white/85 border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-xl">
+                  {fontOptions.map((font) => (
+                    <SelectItem
+                      key={font.value}
+                      value={font.value}
+                      className="text-gray-800 rounded-lg focus:bg-white/40"
+                      style={{ fontFamily: font.family }}
+                    >
+                      {font.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="headerFontFamily" className="text-gray-700/90 font-medium text-xs">Header Font Family</Label>
+              <Select
+                value={formData.headerFontFamily}
+                onValueChange={(value) => updateStoreInfo('headerFontFamily', value)}
+              >
+                <SelectTrigger className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-2xl bg-white/85 border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-xl">
+                  {fontOptions.map((font) => (
+                    <SelectItem
+                      key={font.value}
+                      value={font.value}
+                      className="text-gray-800 rounded-lg focus:bg-white/40"
+                      style={{ fontFamily: font.family }}
+                    >
+                      {font.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

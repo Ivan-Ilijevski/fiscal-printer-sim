@@ -34,7 +34,9 @@ const defaultReceiptData: ReceiptData = {
   headerFontSize: 37,
   headerFontSpacing: 35,
   bodyFontSize: 22,
-  bodyFontSpacing: 25
+  bodyFontSpacing: 25,
+  bodyFontFamily: 'Courier New',
+  headerFontFamily: 'PixelFont'
 };
 
 export default function Home() {
@@ -73,10 +75,10 @@ export default function Home() {
             </div>
           </div>
         </header>
-        
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+
+        <div className="flex flex-col xl:flex-row gap-12">
           {/* Form Section */}
-          <div className="order-1 xl:order-1">
+          <div className="w-full xl:w-1/2">
             <ReceiptForm
               initialData={defaultReceiptData}
               onDataChange={setReceiptData}
@@ -84,8 +86,8 @@ export default function Home() {
           </div>
 
           {/* Preview Section */}
-          <div className="order-2 xl:order-2 flex flex-col">
-            <div className="sticky top-8">
+          <div className="w-full xl:w-1/2">
+            <div className="sticky top-8 z-10">
               <h2 className="text-xl font-semibold mb-6 text-gray-800/90">{t('livePreview')}</h2>
               <div className="relative group">
                 {/* Chromatic aberration effect */}

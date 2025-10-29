@@ -2,16 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'PixelFont';
+  src: url('/PixelFont-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   /* iOS/Mobile viewport fixes */
   html {
     /* Use dynamic viewport height that accounts for browser chrome */
-    height: -webkit-fill-available;
-    height: 100dvh;
     overflow-x: hidden;
-    overscroll-behavior: none;
-    -webkit-overscroll-behavior: none;
     background: linear-gradient(to bottom right, rgb(239 246 255), rgb(250 245 255), rgb(253 242 248));
+    background-attachment: fixed;
   }
 
   body {
@@ -24,11 +29,8 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     overflow-x: hidden;
-    overscroll-behavior-y: none;
-    overscroll-behavior-x: none;
-    -webkit-overscroll-behavior-y: none;
-    -webkit-overscroll-behavior-x: none;
     position: relative;
+    /* DO NOT add overscroll-behavior here - it breaks sticky positioning */
   }
 }
 
@@ -68,4 +70,22 @@
     overscroll-behavior: none;
     -webkit-overscroll-behavior: none;
   }
+
+  /* Force sticky positioning */
+  .sticky-force {
+    position: sticky !important;
+    position: -webkit-sticky !important;
+    top: 2rem !important;
+    z-index: 10 !important;
+  }
+}
+
+/* Outside of layers - highest specificity */
+.preview-sticky {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 2rem !important;
+  z-index: 10;
+  /* Ensure grid items don't stretch which can prevent sticky from working */
+  align-self: start !important;
 }
