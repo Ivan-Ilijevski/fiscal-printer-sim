@@ -11,8 +11,8 @@ const defaultReceiptData: ReceiptData = {
   receiptType: 'ФИСКАЛНА СМЕТКА',
   storeName: 'ГРАНДПРОМ - ЗУР Д.О.О.Е.Л.',
   address: 'УЛИЦА 7 260 СКОПЈЕ',
-  taxNumber: '(555) 123-4567',
-  vatNumber: '(555) 765-4321',
+  taxNumber: '4028011514916',
+  vatNumber: 'MK4208011514916',
   items: [
     { name: 'Coffee', quantity: 2, price: 3.50, vatType: 'A' as const, isDomestic: false },
     { name: 'Sandwich', quantity: 1, price: 8.99, vatType: 'A' as const, isDomestic: false },
@@ -36,7 +36,8 @@ const defaultReceiptData: ReceiptData = {
   bodyFontSize: 22,
   bodyFontSpacing: 25,
   bodyFontFamily: 'Courier New',
-  headerFontFamily: 'PixelFont'
+  headerFontFamily: 'PixelFont',
+  headerFontDoubleWidth: true
 };
 
 export default function Home() {

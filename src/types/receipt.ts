@@ -32,4 +32,5 @@ export interface ReceiptData {
   bodyFontSpacing: number;
   bodyFontFamily: string;
   headerFontFamily: string;
+  headerFontDoubleWidth: boolean;
 }

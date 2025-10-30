@@ -199,10 +199,27 @@ function renderReceipt(
   ctx.fillStyle = 'black';
   ctx.textAlign = 'center';
 
-  ctx.font = `bold ${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
-  ctx.fillText(data.receiptType, width / 2, y);
+  ctx.font = `${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
+
+  // Apply double width if enabled
+  if (data.headerFontDoubleWidth) {
+    ctx.save();
+    ctx.scale(2, 1);
+    ctx.fillText(data.receiptType, width / 4, y);
+    ctx.restore();
+  } else {
+    ctx.fillText(data.receiptType, width / 2, y);
+  }
   y += data.headerFontSpacing;
-  ctx.fillText(`#${data.receiptNumber}`, width / 2, y);
+
+  if (data.headerFontDoubleWidth) {
+    ctx.save();
+    ctx.scale(2, 1);
+    ctx.fillText(`#${data.receiptNumber}`, width / 4, y);
+    ctx.restore();
+  } else {
+    ctx.fillText(`#${data.receiptNumber}`, width / 2, y);
+  }
   y += data.headerFontSpacing;
 
   ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
@@ -402,8 +419,17 @@ function renderReceipt(
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `bold ${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
-  ctx.fillText(data.receiptType, width / 2, y);
+  ctx.font = `${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
+
+  // Apply double width if enabled
+  if (data.headerFontDoubleWidth) {
+    ctx.save();
+    ctx.scale(2, 1);
+    ctx.fillText(data.receiptType, width / 4, y);
+    ctx.restore();
+  } else {
+    ctx.fillText(data.receiptType, width / 2, y);
+  }
 
   y += data.bodyFontSpacing * 2;
   ctx.textAlign = 'left';

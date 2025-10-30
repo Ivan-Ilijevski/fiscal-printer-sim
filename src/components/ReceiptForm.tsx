@@ -32,6 +32,7 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
     { value: 'Verdana', label: 'Verdana', family: 'Verdana, sans-serif' },
     { value: 'Tahoma', label: 'Tahoma', family: 'Tahoma, sans-serif' },
     { value: 'PixelFont', label: 'PixelFont (Custom)', family: 'PixelFont, monospace' },
+    { value: 'PixelFontWide', label: 'PixelFontWide (Custom)', family: 'PixelFontWide, monospace' },
   ];
 
   const updateFormData = (updates: Partial<ReceiptData>) => {
@@ -406,6 +407,20 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="headerFontDoubleWidth" className="text-gray-700/90 font-medium text-xs">Header Double Width</Label>
+              <div className="flex items-center h-11">
+                <input
+                  id="headerFontDoubleWidth"
+                  type="checkbox"
+                  checked={formData.headerFontDoubleWidth}
+                  onChange={(e) => updateFormData({ headerFontDoubleWidth: e.target.checked })}
+                  className="w-5 h-5 rounded border-white/40 bg-white/30 text-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-0 cursor-pointer"
+                />
+                <span className="ml-3 text-sm text-gray-600/90">Enable double-width header text</span>
+              </div>
             </div>
 
             <div className="space-y-2">
