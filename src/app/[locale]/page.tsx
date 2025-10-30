@@ -12,7 +12,7 @@ const defaultReceiptData: ReceiptData = {
   storeName: 'ГРАНДПРОМ - ЗУР Д.О.О.Е.Л.',
   address: 'УЛИЦА 7 260 СКОПЈЕ',
   taxNumber: '4028011514916',
-  vatNumber: 'MK4208011514916',
+  vatNumber: 'МК4208011514916',
   items: [
     { name: 'Coffee', quantity: 2, price: 3.50, vatType: 'A' as const, isDomestic: false },
     { name: 'Sandwich', quantity: 1, price: 8.99, vatType: 'A' as const, isDomestic: false },
@@ -30,12 +30,12 @@ const defaultReceiptData: ReceiptData = {
   time: new Date().toLocaleTimeString('mk-MK', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh',
   datamatrixSize: 197,
-  fiscalLogoSize: 200,
-  headerFontSize: 37,
-  headerFontSpacing: 35,
+  fiscalLogoSize: 190,
+  headerFontSize: 22,
+  headerFontSpacing: 30,
   bodyFontSize: 22,
-  bodyFontSpacing: 25,
-  bodyFontFamily: 'Courier New',
+  bodyFontSpacing: 32,
+  bodyFontFamily: 'PixelFont',
   headerFontFamily: 'PixelFont',
   headerFontDoubleWidth: true
 };
