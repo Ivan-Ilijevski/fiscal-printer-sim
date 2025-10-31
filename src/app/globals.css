@@ -5,7 +5,7 @@
 @font-face {
   font-family: 'PixelFont';
   src: url('/CompactFont.woff2') format('woff2');
-  font-weight: bold;
+  font-weight: regular;
   font-style: normal;
   font-display: swap;
 }
@@ -13,6 +13,14 @@
 @font-face {
   font-family: 'PixelFontWide';
   src: url('/PixelFont-Regular.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PixelFont';
+  src: url('/CompactFont-Bold.woff2') format('woff2');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
