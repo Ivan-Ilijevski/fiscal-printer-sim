@@ -4,23 +4,32 @@ NextJS app for making fiscal receipts. Law violations do apply, Fair use only
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Authentication setup
+
+This project now requires Google OAuth to access any authenticated page. Before running the app you must configure the following environment variables (locally in a `.env.local` file and in Vercel's dashboard for production builds):
+
+| Variable | Description |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | OAuth client ID created in the Google Cloud Console. |
+| `GOOGLE_CLIENT_SECRET` | OAuth client secret paired with the client ID. |
+| `AUTH_SESSION_SECRET` | A long random string used to sign the app's session cookies. |
+
+When developing locally, add these values to `.env.local` and restart the dev server so the environment is updated. On Vercel, set the same keys under **Project Settings → Environment Variables** and redeploy.
+
+To sign in, visit `/login` and click **Continue with Google**. Successful authentication redirects you back to the locale-specific homepage (defaults to `/en`).
+
 ## Getting Started
 
-First, run the development server:
+First, install dependencies and run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `src/app/[locale]/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import ReceiptRenderer from '@/components/ReceiptRenderer';
 import ReceiptForm from '@/components/ReceiptForm';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useAuthSession } from '@/components/auth/SessionProvider';
+import SignOutButton from '@/components/auth/SignOutButton';
 import { ReceiptData } from '@/types/receipt';
 
 const defaultReceiptData: ReceiptData = {
@@ -43,6 +45,8 @@ const defaultReceiptData: ReceiptData = {
 export default function Home() {
   const [receiptData, setReceiptData] = useState(defaultReceiptData);
   const t = useTranslations();
+  const { user } = useAuthSession();
+  const displayName = user.name ?? user.email;
 
   return (
     <div className="min-h-screen-safe relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -58,12 +62,11 @@ export default function Home() {
         <div className="absolute top-1/4 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-bl from-purple-400/40 to-pink-400/40 blur-3xl" />
         <div className="absolute -bottom-40 left-1/3 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-violet-400/35 to-fuchsia-400/35 blur-3xl" />
       </div>
-      
+
       <div className="container mx-auto p-8 relative z-10">
         <header className="mb-12">
-          <div className="flex justify-between items-start mb-10">
-            <div className="flex-1" />
-            <div className="text-center">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between mb-10">
+            <div className="order-2 sm:order-1 text-center sm:text-left sm:flex-1">
               <h1 className="text-5xl font-semibold mb-3 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent tracking-tight">
                 {t('title')}
               </h1>
@@ -71,7 +74,14 @@ export default function Home() {
                 {t('subtitle')}
               </p>
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="order-1 sm:order-2 flex w-full items-center justify-between sm:flex-1 sm:justify-end sm:gap-4">
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-700">{displayName}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
+                <SignOutButton />
+              </div>
               <LanguageSwitcher />
             </div>
           </div>
@@ -96,7 +106,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-tl from-blue-500/5 to-purple-500/5 rounded-[28px] -translate-x-[2px] -translate-y-[2px] blur-sm" />
 
                 {/* Main glass card with 3D effect */}
-                <div className="relative backdrop-blur-xl bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08)] p-10 rounded-[28px] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] hover:bg-white/45 hover:scale-[1.002]">
+                <div className="relative backdrop-blur-xl bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08)] p-10 rounded-[28px] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] hover:bg-white/45 hover:scale-[1.02]">
                   {/* Inner shadow for depth */}
                   <div className="absolute inset-0 rounded-[28px] shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)]" />
                   <div className="relative max-h-[calc(100dvh-16rem)] overflow-y-auto scrollbar-hide native-scroll">
