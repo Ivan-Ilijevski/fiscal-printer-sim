@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import {NextIntlClientProvider} from 'next-intl';
-import {getMessages} from 'next-intl/server';
+import { redirect } from "next/navigation";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { AuthSessionProvider } from "@/components/auth/SessionProvider";
+import { getSessionFromCookies } from "@/lib/auth/session";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -29,12 +32,17 @@ export const viewport = {
 
 export default async function LocaleLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{locale: string}>;
+  params: Promise<{ locale: string }>;
 }) {
-  const {locale} = await params;
+  const { locale } = await params;
+  const session = getSessionFromCookies();
+
+  if (!session) {
+    redirect(`/login?callbackUrl=/${locale}`);
+  }
 
   // Use next-intl's server helper to get messages for the current locale
   // by passing the locale explicitly. This avoids falling back to the
@@ -43,11 +51,9 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <AuthSessionProvider session={session}>{children}</AuthSessionProvider>
         </NextIntlClientProvider>
       </body>
     </html>
