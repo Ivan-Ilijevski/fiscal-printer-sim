@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomStateToken } from "@/lib/auth/session";
+import { buildGoogleCallbackUrl } from "@/lib/auth/google";
 
 const GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const STATE_COOKIE_NAME = "fps_oauth_state";
@@ -16,10 +17,6 @@ function getClientId(): string {
   return value;
 }
 
-function buildRedirectUri(request: NextRequest): string {
-  return `${request.nextUrl.origin}/api/auth/google/callback`;
-}
-
 function sanitizeCallback(callbackUrl: string | null): string {
   if (!callbackUrl || !callbackUrl.startsWith("/")) {
     return DEFAULT_REDIRECT;
@@ -29,7 +26,7 @@ function sanitizeCallback(callbackUrl: string | null): string {
 
 export async function GET(request: NextRequest) {
   const clientId = getClientId();
-  const redirectUri = buildRedirectUri(request);
+  const redirectUri = buildGoogleCallbackUrl(request);
   const callbackUrl = sanitizeCallback(request.nextUrl.searchParams.get("callbackUrl"));
 
   const state = randomStateToken();

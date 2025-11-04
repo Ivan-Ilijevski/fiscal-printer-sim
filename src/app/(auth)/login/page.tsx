@@ -17,7 +17,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
-  const session = getSessionFromCookies();
+  const session = await getSessionFromCookies();
   const { callbackUrl, error } = await searchParams;
   const target = resolveCallbackUrl(callbackUrl);
 

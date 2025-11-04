@@ -133,8 +133,8 @@ function validateSessionToken(token: string): SessionData | null {
   };
 }
 
-export function getSessionFromCookies(): SessionData | null {
-  const cookieStore = cookies();
+export async function getSessionFromCookies(): Promise<SessionData | null> {
+  const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) {
     return null;
