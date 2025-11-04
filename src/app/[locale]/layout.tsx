@@ -38,7 +38,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const session = getSessionFromCookies();
+  const session = await getSessionFromCookies();
 
   if (!session) {
     redirect(`/login?callbackUrl=/${locale}`);

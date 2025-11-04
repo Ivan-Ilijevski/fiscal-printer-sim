@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { attachSessionCookie, clearSessionCookie, SessionUser } from "@/lib/auth/session";
+import { buildGoogleCallbackUrl } from "@/lib/auth/google";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const TOKEN_INFO_ENDPOINT = "https://oauth2.googleapis.com/tokeninfo";
@@ -78,15 +80,16 @@ export async function GET(request: NextRequest) {
     return buildLoginRedirect(request, "oauth");
   }
 
-  const storedState = request.cookies.get(STATE_COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const storedState = cookieStore.get(STATE_COOKIE_NAME)?.value;
   if (!storedState || storedState !== state) {
     return buildLoginRedirect(request, "state");
   }
 
-  const callbackCookie = request.cookies.get(CALLBACK_COOKIE_NAME)?.value ?? null;
+  const callbackCookie = cookieStore.get(CALLBACK_COOKIE_NAME)?.value ?? null;
   const callbackPath = sanitizeCallback(callbackCookie);
 
-  const redirectUri = `${request.nextUrl.origin}/api/auth/google/callback`;
+  const redirectUri = buildGoogleCallbackUrl(request);
 
   const tokenResponse = await fetch(TOKEN_ENDPOINT, {
     method: "POST",
