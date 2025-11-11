@@ -39,3 +39,13 @@ export function calculateDomesticVAT(data: ReceiptData, vatType: 'A' | 'B' | 'V'
   });
   return Number(total.toFixed(2));
 }
+
+export function calculateDomesticSum(data: ReceiptData): string{
+    let total = 0;
+  data.items.forEach(item => {
+    if (item.isDomestic) {
+      total += item.price * item.quantity;
+    }
+  });
+  return (total.toFixed(2)).replace('.', ',');
+}

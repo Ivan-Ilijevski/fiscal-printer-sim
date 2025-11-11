@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData } from '@/types/receipt';
-import { calculateDomesticVAT, calculateVAT } from '@/utils/VATCalc';
+import { calculateDomesticSum, calculateDomesticVAT, calculateVAT } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
 import bwipjs from 'bwip-js';
 import { wrap } from 'module';
@@ -283,7 +283,7 @@ function renderReceipt(
   ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
   ctx.fillText(`ПРОМЕТ ОД МАКЕДОНСКИ ПР.`,padding, y);
   ctx.textAlign = 'right';
-  ctx.fillText((dVatA + dVatB + dVatV + dVatG).toFixed(2).replace('.', ','), width - padding, y);
+  ctx.fillText(calculateDomesticSum(data), width - padding, y);
   y += data.bodyFontSpacing;
 
   ctx.textAlign = 'left';
