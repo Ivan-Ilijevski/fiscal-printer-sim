@@ -1,20 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData, ReceiptItem } from '@/types/receipt';
+import { CustomPreset, ReceiptPreset } from '@/lib/receipt-presets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ReceiptFormProps {
   initialData: ReceiptData;
   onDataChange: (data: ReceiptData) => void;
+  builtInPresets: ReceiptPreset[];
+  customPresets: CustomPreset[];
+  selectedPresetId?: string;
+  onPresetSelect: (presetId: string) => void;
+  onSavePreset: (
+    name: string,
+    data: ReceiptData
+  ) => { status: 'empty' } | { status: 'saved' | 'overwritten'; presetId: string };
+  onDeletePreset: (presetId: string) => void;
 }
 
-export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormProps) {
+export default function ReceiptForm({
+  initialData,
+  onDataChange,
+  builtInPresets,
+  customPresets,
+  selectedPresetId,
+  onPresetSelect,
+  onSavePreset,
+  onDeletePreset,
+}: ReceiptFormProps) {
   const [formData, setFormData] = useState(initialData);
+  const [presetName, setPresetName] = useState('');
+  const [presetFeedback, setPresetFeedback] = useState<string | null>(null);
   const t = useTranslations();
 
   const fontOptions = [
@@ -40,6 +69,12 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
     setFormData(newData);
     onDataChange(newData);
   };
+
+  useEffect(() => {
+    setFormData(initialData);
+  }, [initialData]);
+
+  const selectedCustomPreset = customPresets.find((preset) => preset.id === selectedPresetId);
 
   const updateStoreInfo = (field: string, value: string) => {
     // Convert numeric fields to numbers
@@ -109,11 +144,121 @@ export default function ReceiptForm({ initialData, onDataChange }: ReceiptFormPr
     { value: "Mobile Payment", label: t('paymentMethods.mobilePayment') }
   ];
 
+  const handlePresetSave = () => {
+    const result = onSavePreset(presetName, formData);
+
+    if (result.status === 'empty') {
+      setPresetFeedback(t('presetValidationEmptyName'));
+      return;
+    }
+
+    setPresetFeedback(
+      result.status === 'overwritten' ? t('presetOverwriteSuccess') : t('presetSaveSuccess')
+    );
+    setPresetName('');
+  };
+
+  const handlePresetDelete = () => {
+    if (!selectedCustomPreset) {
+      return;
+    }
+
+    onDeletePreset(selectedCustomPreset.id);
+    setPresetFeedback(t('presetDeleteSuccess'));
+  };
+
   return (
     <div className="w-full max-w-2xl space-y-8">
       <div className="text-center">
         <h2 className="text-2xl font-semibold text-gray-800/90 mb-2">{t('customizeReceipt')}</h2>
         <p className="text-gray-600/80 font-medium text-sm">Configure your receipt details and items</p>
+      </div>
+
+      <div className="relative group">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/4 to-orange-500/4 rounded-[22px] translate-x-[1.5px] translate-y-[1.5px] blur-[0.5px]" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-emerald-500/4 to-sky-500/4 rounded-[22px] -translate-x-[1.5px] -translate-y-[1.5px] blur-[0.5px]" />
+
+        <div className="relative backdrop-blur-2xl bg-white/35 border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)] rounded-[22px] overflow-hidden transition-all duration-300 hover:bg-white/40 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+
+          <div className="bg-gradient-to-b from-white/20 to-white/5 px-6 py-4 border-b border-white/30">
+            <h3 className="text-lg font-semibold text-gray-800/90">{t('presets')}</h3>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="preset-selector" className="text-gray-700/90 font-medium text-xs">
+                {t('presetSelectorLabel')}
+              </Label>
+              <Select value={selectedPresetId} onValueChange={onPresetSelect}>
+                <SelectTrigger
+                  id="preset-selector"
+                  className="w-full backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                >
+                  <SelectValue placeholder={t('presetSelectorPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-2xl bg-white/85 border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-xl">
+                  <SelectGroup>
+                    <SelectLabel>{t('builtInPresets')}</SelectLabel>
+                    {builtInPresets.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id} className="text-gray-800 rounded-lg focus:bg-white/40">
+                        {preset.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>{t('customPresets')}</SelectLabel>
+                    {customPresets.length > 0 ? (
+                      customPresets.map((preset) => (
+                        <SelectItem key={preset.id} value={preset.id} className="text-gray-800 rounded-lg focus:bg-white/40">
+                          {preset.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-xs text-gray-500">{t('noCustomPresets')}</div>
+                    )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto] gap-3 items-end">
+              <div className="space-y-2">
+                <Label htmlFor="preset-name" className="text-gray-700/90 font-medium text-xs">
+                  {t('presetNameLabel')}
+                </Label>
+                <Input
+                  id="preset-name"
+                  type="text"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  placeholder={t('presetNamePlaceholder')}
+                  className="backdrop-blur-xl bg-white/30 border border-white/40 text-gray-800 placeholder:text-gray-500/60 h-11 rounded-xl focus:bg-white/40 focus:border-white/60 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                />
+              </div>
+
+              <Button
+                type="button"
+                onClick={handlePresetSave}
+                className="backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-11"
+              >
+                {t('savePreset')}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={handlePresetDelete}
+                disabled={!selectedCustomPreset}
+                variant="destructive"
+                className="h-11"
+              >
+                {t('deletePreset')}
+              </Button>
+            </div>
+
+            {presetFeedback ? <p className="text-sm text-gray-600/90">{presetFeedback}</p> : null}
+          </div>
+        </div>
       </div>
       
       {/* Store Information */}

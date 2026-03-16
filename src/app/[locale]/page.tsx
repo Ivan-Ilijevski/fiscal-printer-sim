@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import ReceiptRenderer from '@/components/ReceiptRenderer';
 import ReceiptForm from '@/components/ReceiptForm';
@@ -8,45 +8,75 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuthSession } from '@/components/auth/SessionProvider';
 import SignOutButton from '@/components/auth/SignOutButton';
 import { ReceiptData } from '@/types/receipt';
-
-const defaultReceiptData: ReceiptData = {
-  receiptType: 'ФИСКАЛНА СМЕТКА',
-  storeName: 'ГРАНДПРОМ - ЗУР Д.О.О.Е.Л.',
-  address: 'УЛИЦА 7 260 СКОПЈЕ',
-  taxNumber: '4028011514916',
-  vatNumber: 'МК4208011514916',
-  items: [
-    { name: 'Coffee', quantity: 2, price: 3.50, vatType: 'A' as const, isDomestic: false },
-    { name: 'Sandwich', quantity: 1, price: 8.99, vatType: 'A' as const, isDomestic: false },
-    { name: 'Pastry', quantity: 3, price: 2.25, vatType: 'B' as const, isDomestic: false }
-  ],
-  vatTypeA: 18.00,
-  vatTypeB: 5.00,
-  vatTypeV: 0.00,
-  vatTypeG: 0.00,
-  total: 24.79,
-  paymentMethod: 'ВО ГОТОВО',
-  receiptNumber: '0012',
-  date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
-  dateTextFlag: false,
-  time: new Date().toLocaleTimeString('mk-MK', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-  datamatrixCode: 'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh',
-  datamatrixSize: 197,
-  fiscalLogoSize: 190,
-  headerFontSize: 22,
-  headerFontSpacing: 30,
-  bodyFontSize: 22,
-  bodyFontSpacing: 32,
-  bodyFontFamily: 'PixelFont',
-  headerFontFamily: 'PixelFont',
-  headerFontDoubleWidth: true
-};
+import {
+  builtInPresets,
+  CustomPreset,
+  defaultReceiptData,
+  loadCustomPresets,
+  saveCustomPresets,
+} from '@/lib/receipt-presets';
 
 export default function Home() {
   const [receiptData, setReceiptData] = useState(defaultReceiptData);
+  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>();
   const t = useTranslations();
   const { user } = useAuthSession();
   const displayName = user.name ?? user.email;
+
+  useEffect(() => {
+    setCustomPresets(loadCustomPresets());
+  }, []);
+
+  const handlePresetSelect = (presetId: string) => {
+    const preset = [...builtInPresets, ...customPresets].find((entry) => entry.id === presetId);
+    if (!preset) {
+      return;
+    }
+
+    setSelectedPresetId(preset.id);
+    setReceiptData(preset.data);
+  };
+
+  const handleSavePreset = (name: string, data: ReceiptData) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return { status: 'empty' as const };
+    }
+
+    const existingPreset = customPresets.find((preset) => preset.name === trimmedName);
+    const nextPreset: CustomPreset = existingPreset
+      ? {
+          ...existingPreset,
+          data,
+        }
+      : {
+          id: `custom:${Date.now()}`,
+          name: trimmedName,
+          data,
+          createdAt: new Date().toISOString(),
+        };
+
+    const nextCustomPresets = existingPreset
+      ? customPresets.map((preset) => (preset.id === existingPreset.id ? nextPreset : preset))
+      : [...customPresets, nextPreset];
+
+    saveCustomPresets(nextCustomPresets);
+    setCustomPresets(nextCustomPresets);
+    setSelectedPresetId(nextPreset.id);
+
+    return { status: existingPreset ? ('overwritten' as const) : ('saved' as const), presetId: nextPreset.id };
+  };
+
+  const handleDeletePreset = (presetId: string) => {
+    const nextCustomPresets = customPresets.filter((preset) => preset.id !== presetId);
+    saveCustomPresets(nextCustomPresets);
+    setCustomPresets(nextCustomPresets);
+
+    if (selectedPresetId === presetId) {
+      setSelectedPresetId(undefined);
+    }
+  };
 
   return (
     <div className="min-h-screen-safe relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -91,8 +121,14 @@ export default function Home() {
           {/* Form Section */}
           <div className="w-full xl:w-1/2">
             <ReceiptForm
-              initialData={defaultReceiptData}
+              initialData={receiptData}
               onDataChange={setReceiptData}
+              builtInPresets={builtInPresets}
+              customPresets={customPresets}
+              selectedPresetId={selectedPresetId}
+              onPresetSelect={handlePresetSelect}
+              onSavePreset={handleSavePreset}
+              onDeletePreset={handleDeletePreset}
             />
           </div>
 
