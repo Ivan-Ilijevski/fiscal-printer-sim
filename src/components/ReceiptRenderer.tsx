@@ -78,26 +78,22 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
   }, [receiptData, onCanvasReady, logoImage, fontMetrics]);
 
   return (
-    <div className="flex flex-col items-center gap-8">
-
-        <canvas
-          ref={canvasRef}
-          className=" shadow-lg"
-          style={{ maxWidth: '100%', height: 'auto' }}
-        />
+    <div className="flex w-full flex-col gap-5">
+      {/* The paper. Pure #FFFFFF behind a #FFFFFF raster, so the canvas edge disappears and
+          the receipt reads as one continuous strip; the mask tears the top and bottom edges.
+          The canvas scrolls inside it, which keeps the actions below always reachable. */}
+      <div className="drop-shadow-[0_6px_18px_rgb(26_23_20/0.13)]">
+        <div className="perforated bg-sheet px-4 py-7">
+          <div className="native-scroll scrollbar-hide max-h-[calc(100dvh-21rem)] overflow-auto">
+            <canvas ref={canvasRef} className="mx-auto block" style={{ maxWidth: '100%', height: 'auto' }} />
+          </div>
+        </div>
+      </div>
 
       {isRendered && (
-        <div className="w-full grid grid-cols-2 gap-4">
-          <Button
-            onClick={downloadReceipt}
-            className="backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-12 text-lg font-light tracking-wide transition-all duration-200"
-          >
-            {t('downloadReceipt')}
-          </Button>
-          <Button
-            onClick={shareReceipt}
-            className="backdrop-blur-md bg-white/15 border border-white/25 text-slate-700 hover:bg-white/20 hover:border-white/30 h-12 text-lg font-light tracking-wide transition-all duration-200"
-          >
+        <div className="grid w-full grid-cols-2 gap-2">
+          <Button onClick={downloadReceipt}>{t('downloadReceipt')}</Button>
+          <Button onClick={shareReceipt} variant="outline">
             {t('shareReceipt')}
           </Button>
         </div>
@@ -117,42 +113,44 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
   async function shareReceipt() {
     if (!canvasRef.current) return;
 
+    let file: File;
     try {
-      // Convert canvas to blob
-      canvasRef.current.toBlob(async (blob) => {
-        if (!blob) return;
-
-        const file = new File([blob], `receipt-${receiptData.receiptNumber}.png`, {
-          type: 'image/png',
-        });
-
-        // Check if Web Share API is supported
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: `Receipt #${receiptData.receiptNumber}`,
-              text: `Receipt from ${receiptData.storeName}`,
-              files: [file],
-            });
-          } catch (error) {
-            // User cancelled or error occurred
-            if ((error as Error).name !== 'AbortError') {
-              console.error('Error sharing:', error);
-              // Fallback to download
-              downloadReceipt();
-            }
-          }
-        } else {
-          // Fallback to download if share is not supported
-          downloadReceipt();
-        }
-      });
+      // Built synchronously so navigator.share() stays inside the click's user
+      // activation window - iOS Safari rejects the call otherwise.
+      file = canvasToPngFile(canvasRef.current, `receipt-${receiptData.receiptNumber}.png`);
     } catch (error) {
       console.error('Error preparing share:', error);
-      // Fallback to download
       downloadReceipt();
+      return;
+    }
+
+    // Share the image on its own. Adding title/text makes iOS treat this as a
+    // multi-item share and hides every target that only accepts an image.
+    if (!navigator.share || !navigator.canShare?.({ files: [file] })) {
+      downloadReceipt();
+      return;
+    }
+
+    try {
+      await navigator.share({ files: [file] });
+    } catch (error) {
+      // User dismissed the share sheet - not a failure, don't download.
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error sharing:', error);
+        downloadReceipt();
+      }
     }
   }
+}
+
+function canvasToPngFile(canvas: HTMLCanvasElement, name: string): File {
+  const base64 = canvas.toDataURL('image/png').split(',')[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], name, { type: 'image/png' });
 }
 
 function calculateReceiptHeight(data: ReceiptData): number {

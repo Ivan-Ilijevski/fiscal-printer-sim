@@ -12,7 +12,13 @@
       "Bash(npx --yes esbuild@0.25.0 src/utils/VATCalc.ts src/lib/receipt-presets.ts --bundle --format=esm --outdir=/tmp/vatcheck --alias:@=./src --log-level=warning)",
       "Read(//tmp/**)",
       "mcp__plugin_playwright_playwright__browser_run_code_unsafe",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "Bash(git fsck *)",
+      "Bash(echo \"=== tsc exit: $? ===\")",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "Bash(pkill -f \"next dev\")"
     ]
   }
 }

@@ -55,9 +55,13 @@ export function calculateDomesticVAT(data: ReceiptData, vatType: VatType): numbe
   return sumVAT(data, vatType, (item) => item.isDomestic);
 }
 
+/** Denar amounts print with a comma decimal separator, both on the receipt and in the UI. */
+export function formatDenar(amount: number): string {
+  const safe = Number.isFinite(amount) ? amount : 0;
+  return safe.toFixed(2).replace('.', ',');
+}
+
 /** ПРОМЕТ ОД МАКЕДОНСКИ ПР. — the amount paid, in denars, that comes from a Macedonian source. */
 export function calculateDomesticSum(data: ReceiptData): string {
-  return sumItems(data.items, (item) => item.isDomestic)
-    .toFixed(2)
-    .replace('.', ',');
+  return formatDenar(sumItems(data.items, (item) => item.isDomestic));
 }

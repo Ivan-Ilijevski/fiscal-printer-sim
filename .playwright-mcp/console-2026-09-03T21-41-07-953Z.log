@@ -1,0 +1,19 @@
+[     906ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/4b4c5_next_dist_compiled_react-dom_83f7d5fe._.js:14537
+[     968ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[    1001ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[    1078ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[   10491ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  242822ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/4b4c5_next_dist_client_8ab9c833._.js:5949
+[  242838ms] [LOG] [Fast Refresh] done in 117ms @ http://localhost:3000/_next/static/chunks/4b4c5_next_dist_client_8ab9c833._.js:5809
+[  242888ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/4b4c5_next_dist_compiled_react-dom_83f7d5fe._.js:14537
+[  242941ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  242977ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  243062ms] [LOG] Max chars per line: 28 Avg char width: 13.25 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  266362ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  266375ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  266405ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  266486ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  267776ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  267786ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  267813ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402
+[  267888ms] [LOG] Max chars per line: 29 Avg char width: 13.04 @ http://localhost:3000/_next/static/chunks/src_58fff38b._.js:402

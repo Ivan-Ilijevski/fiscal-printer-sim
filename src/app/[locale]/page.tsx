@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import ReceiptRenderer from '@/components/ReceiptRenderer';
+import PreviewPanel from '@/components/PreviewPanel';
 import ReceiptForm from '@/components/ReceiptForm';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuthSession } from '@/components/auth/SessionProvider';
 import SignOutButton from '@/components/auth/SignOutButton';
 import { ReceiptData } from '@/types/receipt';
+import { formatDenar } from '@/utils/VATCalc';
 import {
   builtInPresets,
   currentDateTime,
@@ -21,6 +22,7 @@ export default function Home() {
   const [receiptData, setReceiptData] = useState(defaultReceiptData);
   const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const t = useTranslations();
   const { user } = useAuthSession();
   const displayName = user.name ?? user.email;
@@ -87,47 +89,38 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen-safe relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* iOS-style liquid glass gradient background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Multi-layer gradient mesh */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 via-purple-400/30 to-pink-400/30" />
-        <div className="absolute inset-0 bg-gradient-to-tl from-cyan-300/20 via-indigo-300/20 to-violet-300/20" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-fuchsia-300/15 via-rose-300/15 to-amber-300/15" />
-
-        {/* Large gradient orbs for depth */}
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-blue-400/40 to-cyan-400/40 blur-3xl" />
-        <div className="absolute top-1/4 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-bl from-purple-400/40 to-pink-400/40 blur-3xl" />
-        <div className="absolute -bottom-40 left-1/3 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-violet-400/35 to-fuchsia-400/35 blur-3xl" />
-      </div>
-
-      <div className="container mx-auto p-8 relative z-10">
-        <header className="mb-12">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between mb-10">
-            <div className="order-2 sm:order-1 text-center sm:text-left sm:flex-1">
-              <h1 className="text-5xl font-semibold mb-3 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent tracking-tight">
+    <div className="min-h-screen-safe relative z-[2]">
+      <div className="mx-auto max-w-[1500px] px-5 pt-8 pb-28 sm:px-8 xl:pb-12">
+        <header className="rise mb-12 border-b-2 border-ink pb-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="font-display text-[clamp(1.9rem,4vw,2.85rem)] leading-[1.05] font-bold tracking-[-0.02em] text-ink">
                 {t('title')}
               </h1>
-              <p className="text-lg text-gray-600/90 font-medium">
-                {t('subtitle')}
-              </p>
+              <p className="label-mono mt-2.5">{t('specLine')}</p>
             </div>
-            <div className="order-1 sm:order-2 flex w-full items-center justify-between sm:flex-1 sm:justify-end sm:gap-4">
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-700">{displayName}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                </div>
+
+            <div className="flex items-center justify-between gap-4 sm:justify-end">
+              <div className="min-w-0">
+                <p className="truncate font-mono text-[12px] text-ink">{displayName}</p>
+                <p className="truncate font-mono text-[11px] text-ink-3">{user.email}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <LanguageSwitcher />
                 <SignOutButton />
               </div>
-              <LanguageSwitcher />
             </div>
           </div>
         </header>
 
-        <div className="flex flex-col xl:flex-row gap-12">
-          {/* Form Section */}
-          <div className="w-full xl:w-1/2">
+        <div className="grid grid-cols-1 gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,460px)] xl:gap-16">
+          {/* Editor — the only thing in flow on mobile */}
+          <div className="min-w-0">
+            <div className="rise mb-9">
+              <h2 className="font-display text-xl font-semibold tracking-tight text-ink">{t('customizeReceipt')}</h2>
+              <p className="mt-1.5 font-mono text-[12px] text-ink-3">{t('configureSubtitle')}</p>
+            </div>
+
             <ReceiptForm
               initialData={receiptData}
               onDataChange={setReceiptData}
@@ -140,27 +133,31 @@ export default function Home() {
             />
           </div>
 
-          {/* Preview Section */}
-          <div className="w-full xl:w-1/2">
-            <div className="sticky top-8 z-10">
-              <h2 className="text-xl font-semibold mb-6 text-gray-800/90">{t('livePreview')}</h2>
-              <div className="relative group">
-                {/* Chromatic aberration effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-pink-500/5 rounded-[28px] translate-x-[2px] translate-y-[2px] blur-sm" />
-                <div className="absolute inset-0 bg-gradient-to-tl from-blue-500/5 to-purple-500/5 rounded-[28px] -translate-x-[2px] -translate-y-[2px] blur-sm" />
-
-                {/* Main glass card with 3D effect */}
-                <div className="relative backdrop-blur-xl bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08)] p-10 rounded-[28px] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] hover:bg-white/45 hover:scale-[1.02]">
-                  {/* Inner shadow for depth */}
-                  <div className="absolute inset-0 rounded-[28px] shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)]" />
-                  <div className="relative max-h-[calc(100dvh-16rem)] overflow-y-auto scrollbar-hide native-scroll">
-                    <ReceiptRenderer receiptData={receiptData} />
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Receipt — sticky right column at xl+, a slide-up sheet below it */}
+          <div className="xl:sticky xl:top-8 xl:self-start">
+            <PreviewPanel receiptData={receiptData} open={previewOpen} onClose={() => setPreviewOpen(false)} />
           </div>
         </div>
+      </div>
+
+      {/* Mobile action bar. Doubles as a running total so the amount stays visible while editing.
+          position:fixed escapes the body safe-area padding, so .pb-safe re-applies the inset. */}
+      <div
+        className={`pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-rule bg-paper/95 px-5 pt-3 backdrop-blur-sm transition-opacity xl:hidden ${
+          previewOpen ? 'pointer-events-none opacity-0' : 'opacity-100'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => setPreviewOpen(true)}
+          className="flex h-12 w-full items-center justify-between bg-ink px-4 text-paper transition-colors hover:bg-stamp"
+        >
+          <span className="font-mono text-[11px] font-medium tracking-[0.09em] uppercase">{t('previewReceipt')}</span>
+          <span className="tabular font-mono text-[13px] font-medium">
+            {formatDenar(receiptData.total)}
+            <span className="ml-1.5 text-[10px] tracking-[0.09em] opacity-70">ДЕН</span>
+          </span>
+        </button>
       </div>
     </div>
   );

@@ -4,6 +4,11 @@ import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTransition } from 'react';
 
+const LOCALES = [
+  { code: 'en', label: 'EN' },
+  { code: 'mk', label: 'МК' },
+];
+
 export default function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
@@ -33,27 +38,19 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="backdrop-blur-lg bg-white/15 border border-white/25 shadow-lg rounded-2xl p-2 hover:scale-[1.005] transition-transform duration-300">
-      <button
-        onClick={() => switchLanguage('en')}
-        className={`px-6 py-3 rounded-xl text-sm font-light transition-all duration-300 ${
-          locale === 'en'
-            ? 'backdrop-blur-md bg-white/20 border border-white/30 text-slate-700 shadow-lg scale-105'
-            : 'text-slate-600 hover:text-slate-700 hover:bg-white/10'
-        }`}
-      >
-        EN
-      </button>
-      <button
-        onClick={() => switchLanguage('mk')}
-        className={`px-6 py-3 rounded-xl text-sm font-light transition-all duration-300 ${
-          locale === 'mk'
-            ? 'backdrop-blur-md bg-white/20 border border-white/30 text-slate-700 shadow-lg scale-105'
-            : 'text-slate-600 hover:text-slate-700 hover:bg-white/10'
-        }`}
-      >
-        МК
-      </button>
+    <div className="flex border border-rule bg-paper-2">
+      {LOCALES.map(({ code, label }) => (
+        <button
+          key={code}
+          onClick={() => switchLanguage(code)}
+          aria-current={locale === code ? 'true' : undefined}
+          className={`h-9 px-3 font-mono text-[11px] font-medium tracking-[0.09em] transition-colors ${
+            locale === code ? 'bg-ink text-paper' : 'text-ink-3 hover:bg-sheet hover:text-ink'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

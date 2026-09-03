@@ -1,21 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { redirect } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { AuthSessionProvider } from "@/components/auth/SessionProvider";
 import { getSessionFromCookies } from "@/lib/auth/session";
+import { fontVariables } from "@/lib/fonts";
 import "../globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Fiscal Printer Simulator",
@@ -51,7 +41,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${fontVariables} grain antialiased`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthSessionProvider session={session}>{children}</AuthSessionProvider>
         </NextIntlClientProvider>

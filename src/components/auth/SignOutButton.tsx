@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export default function SignOutButton() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const t = useTranslations("auth");
 
   const handleSignOut = async () => {
     if (isLoading) {
@@ -39,9 +41,9 @@ export default function SignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={isLoading}
-      className="rounded-full border border-white/60 bg-white/30 px-4 py-2 text-sm font-medium text-gray-700 backdrop-blur transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-70"
+      className="h-9 border border-rule bg-paper-2 px-3 font-mono text-[11px] font-medium tracking-[0.09em] text-ink-3 uppercase transition-colors hover:border-stamp hover:text-stamp disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {isLoading ? "Signing out…" : "Sign out"}
+      {isLoading ? t("signingOut") : t("signOut")}
     </button>
   );
 }

@@ -1,33 +1,59 @@
 @import "tailwindcss";
 
-/*
- * Design tokens for the shadcn primitives in src/components/ui/. These components reference
- * bg-primary, bg-destructive, text-muted-foreground, border-input, ring-ring and friends; without
- * these definitions none of those classes emit any CSS and the components render unstyled.
- * Palette: shadcn "neutral" base, per components.json.
- */
-:root {
-  --radius: 0.625rem;
+/* ============================================================================
+ * FISCAL LEDGER — design system
+ *
+ * The look of a printer spec sheet: warm paper, graph-paper grid, near-black
+ * ink, hairline rules, sharp corners, one red-ink accent. Light only.
+ *
+ * The shadcn primitives in src/components/ui/ read --primary, --border,
+ * --muted-foreground, --ring and friends. Those are mapped onto the palette
+ * below rather than being overridden at each call site, so Button/Input/
+ * Select/Label render correctly with no per-instance className overrides.
+ * ==========================================================================*/
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+:root {
+  --paper: #faf7f2; /* page ground */
+  --paper-2: #f3eee5; /* recessed field wells */
+  --paper-3: #eae3d6; /* deeper insets, readonly, disabled */
+  --sheet: #ffffff; /* receipt panel — matches the canvas raster exactly */
+
+  --ink: #1a1714; /* primary text */
+  --ink-2: #5c544a; /* secondary text */
+  --ink-3: #918776; /* labels, hints, tertiary */
+
+  --rule: #ddd5c8; /* hairlines */
+  --rule-2: #bcb1a0; /* emphasized rules, slider tracks */
+
+  --stamp: #c8321e; /* red ink: accent, focus, checked, destructive */
+  --stamp-wash: #fbeae6;
+  --seal: #2f6b4f; /* success */
+
+  --grid-major: rgb(26 23 20 / 0.045);
+  --grid-minor: rgb(26 23 20 / 0.022);
+
+  --radius: 3px;
+
+  /* shadcn token layer, pointed at the palette above */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--sheet);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--paper-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-2);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--paper-2);
+  --accent-foreground: var(--ink);
+  --destructive: var(--stamp);
+  --destructive-foreground: var(--paper);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--stamp);
 }
 
 @theme inline {
@@ -51,14 +77,28 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Palette exposed as utilities: bg-paper, text-ink-3, border-rule, … */
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-sheet: var(--sheet);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-2: var(--rule-2);
+  --color-stamp: var(--stamp);
+  --color-stamp-wash: var(--stamp-wash);
+  --color-seal: var(--seal);
 
-  /* Ported from the deleted tailwind.config.js */
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+
+  --font-display: var(--font-display), Georgia, serif;
+  --font-mono: var(--font-mono-ui), ui-monospace, monospace;
+  --font-sans: var(--font-mono-ui), ui-monospace, monospace;
 }
 
 /* v4 defaults a bare `border` to currentColor; restore the v3 behaviour the markup assumes. */
@@ -83,7 +123,7 @@
 
 @font-face {
   font-family: 'PixelFont';
-  src: url('/CompactFont-bold.woff2') format('woff2');
+  src: url('/CompactFont-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -95,18 +135,29 @@
    browser synthesize bold from the regular face, which has correct metrics and a real comma. */
 @font-face {
   font-family: 'PixelFontWide';
-  src: url('/Pixelfont-Regular.woff2') format('woff2');
+  src: url('/PixelFont-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @layer base {
-  /* iOS/Mobile viewport fixes */
   html {
-    /* Use dynamic viewport height that accounts for browser chrome */
     overflow-x: hidden;
-    background: linear-gradient(to bottom right, rgb(239 246 255), rgb(250 245 255), rgb(253 242 248));
+    color: var(--ink);
+    /* Graph paper: a 96px major grid over a 24px minor one, both at very low contrast.
+       Fixed so the sheet stays put while the form scrolls over it. */
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+      linear-gradient(var(--grid-minor) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+    background-size:
+      96px 96px,
+      96px 96px,
+      24px 24px,
+      24px 24px;
     background-attachment: fixed;
   }
 
@@ -114,6 +165,8 @@
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: 100dvh;
+    font-family: var(--font-mono-ui), ui-monospace, monospace;
+    font-size: 14px;
     /* Support for iPhone notch and home indicator */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -122,6 +175,174 @@
     overflow-x: hidden;
     position: relative;
     /* DO NOT add overscroll-behavior here - it breaks sticky positioning */
+  }
+
+  ::selection {
+    background: var(--stamp);
+    color: var(--paper);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Controls. Styled once here so call sites carry no styling classes.
+ * -------------------------------------------------------------------------*/
+@layer base {
+  /* Ruler slider: a hairline track over tick marks, with a machined ink block
+     for a thumb. */
+  input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 20px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 20px;
+    background:
+      /* the 2px rule */
+      linear-gradient(var(--rule-2), var(--rule-2)) center / 100% 2px no-repeat,
+      /* tick marks every 10% */ repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 10%)
+        center / 100% 10px no-repeat;
+  }
+
+  input[type='range']::-moz-range-track {
+    height: 20px;
+    background:
+      linear-gradient(var(--rule-2), var(--rule-2)) center / 100% 2px no-repeat,
+      repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 10%) center / 100% 10px no-repeat;
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 16px;
+    margin-top: 2px;
+    border-radius: 0;
+    background: var(--ink);
+    box-shadow: 0 0 0 2px var(--paper);
+    transition: background 0.15s;
+  }
+
+  input[type='range']::-moz-range-thumb {
+    width: 12px;
+    height: 16px;
+    border: none;
+    border-radius: 0;
+    background: var(--ink);
+    box-shadow: 0 0 0 2px var(--paper);
+  }
+
+  input[type='range']:hover::-webkit-slider-thumb,
+  input[type='range']:focus-visible::-webkit-slider-thumb {
+    background: var(--stamp);
+  }
+  input[type='range']:hover::-moz-range-thumb,
+  input[type='range']:focus-visible::-moz-range-thumb {
+    background: var(--stamp);
+  }
+
+  /* Stamped checkbox */
+  input[type='checkbox'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border: 1px solid var(--rule-2);
+    border-radius: 1px;
+    background: var(--sheet);
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition:
+      background 0.12s,
+      border-color 0.12s;
+  }
+
+  input[type='checkbox']::after {
+    content: '';
+    width: 8px;
+    height: 4px;
+    border: 1.5px solid var(--paper);
+    border-top: 0;
+    border-right: 0;
+    transform: translateY(-1px) rotate(-45deg) scale(0);
+    transition: transform 0.12s ease-out;
+  }
+
+  input[type='checkbox']:checked {
+    background: var(--stamp);
+    border-color: var(--stamp);
+  }
+
+  input[type='checkbox']:checked::after {
+    transform: translateY(-1px) rotate(-45deg) scale(1);
+  }
+
+  input[type='checkbox']:hover:not(:checked) {
+    border-color: var(--ink-3);
+  }
+
+  /* Number inputs: the spinners fight the fixed-width readouts next to the sliders. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--stamp);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* A recessed well with a hairline underline that inks red on focus. Applied by the
+     Input/SelectTrigger primitives and the item-name textarea. */
+  .field-well {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-bottom-color: var(--rule-2);
+    border-radius: 2px;
+    color: var(--ink);
+    transition:
+      border-color 0.15s,
+      background 0.15s;
+  }
+
+  .field-well:hover:not(:disabled):not([readonly]) {
+    background: var(--sheet);
+  }
+
+  .field-well:focus,
+  .field-well:focus-visible,
+  .field-well[data-state='open'] {
+    background: var(--sheet);
+    border-bottom-color: var(--stamp);
+    outline: none;
+  }
+
+  .field-well[readonly],
+  .field-well:disabled {
+    background: var(--paper-3);
+    color: var(--ink-3);
+  }
+
+  /* The uppercase mono micro-label used for every field and every piece of metadata. */
+  .label-mono {
+    font-family: var(--font-mono-ui), ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
   }
 }
 
@@ -133,8 +354,8 @@
 
   /* Hide scrollbar for IE, Edge and Firefox */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 
   /* Native iOS/Mac scroll behavior */
@@ -159,24 +380,75 @@
   /* Prevent overscroll bounce */
   .overscroll-none {
     overscroll-behavior: none;
-    -webkit-overscroll-behavior: none;
   }
 
-  /* Force sticky positioning */
-  .sticky-force {
-    position: sticky !important;
-    position: -webkit-sticky !important;
-    top: 2rem !important;
-    z-index: 10 !important;
+  /* position:fixed escapes the body's safe-area padding, so the mobile action bar
+     re-applies the bottom inset itself to clear the home indicator. */
+  .pb-safe {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   }
-}
 
-/* Outside of layers - highest specificity */
-.preview-sticky {
-  position: -webkit-sticky !important;
-  position: sticky !important;
-  top: 2rem !important;
-  z-index: 10;
-  /* Ensure grid items don't stretch which can prevent sticky from working */
-  align-self: start !important;
+  /* Torn/perforated paper edge. Scallops are punched out of the top and bottom of the
+     receipt sheet so it reads as a physical strip rather than a rectangle. */
+  .perforated {
+    --scallop: 11px;
+    -webkit-mask-image:
+      radial-gradient(circle var(--scallop) at 50% 0, transparent 0 var(--scallop), #000 calc(var(--scallop) + 0.5px)),
+      radial-gradient(circle var(--scallop) at 50% 100%, transparent 0 var(--scallop), #000 calc(var(--scallop) + 0.5px));
+    -webkit-mask-size: 22px 51%;
+    -webkit-mask-position:
+      top left,
+      bottom left;
+    -webkit-mask-repeat: repeat-x;
+    mask-image:
+      radial-gradient(circle var(--scallop) at 50% 0, transparent 0 var(--scallop), #000 calc(var(--scallop) + 0.5px)),
+      radial-gradient(circle var(--scallop) at 50% 100%, transparent 0 var(--scallop), #000 calc(var(--scallop) + 0.5px));
+    mask-size: 22px 51%;
+    mask-position:
+      top left,
+      bottom left;
+    mask-repeat: repeat-x;
+  }
+
+  /* Paper grain. An inline feTurbulence keeps it asset-free. */
+  .grain::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.32;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One orchestrated page-load reveal; sections stagger via inline animation-delay. */
+  @keyframes ledger-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .rise {
+    animation: ledger-rise 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise {
+      animation: none;
+    }
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

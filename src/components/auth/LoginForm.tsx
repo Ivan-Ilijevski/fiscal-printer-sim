@@ -1,35 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface LoginFormProps {
   callbackUrl: string;
   error?: string;
 }
 
-function getErrorMessage(code?: string): string | null {
-  if (!code) {
-    return null;
-  }
-
-  switch (code) {
-    case "state":
-      return "We couldn't verify your session. Please try signing in again.";
-    case "access_denied":
-      return "Access was denied by Google. Please approve the requested permissions.";
-    case "oauth":
-      return "We couldn't complete the sign-in with Google. Please try again.";
-    case "token":
-      return "We couldn't validate the Google token. Please try another account.";
-    default:
-      return "An unexpected authentication error occurred. Please try again.";
-  }
-}
+/** Maps the ?error= codes set by the OAuth callback route onto message keys. */
+const ERROR_KEYS: Record<string, string> = {
+  state: "state",
+  access_denied: "accessDenied",
+  oauth: "oauth",
+  token: "token",
+};
 
 export default function LoginForm({ callbackUrl, error }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations("auth");
 
-  const errorMessage = useMemo(() => getErrorMessage(error), [error]);
+  const errorMessage = error ? t(`errors.${ERROR_KEYS[error] ?? "default"}`) : null;
 
   const handleSignIn = () => {
     if (isSubmitting) {
@@ -44,7 +35,7 @@ export default function LoginForm({ callbackUrl, error }: LoginFormProps) {
   return (
     <div className="space-y-6">
       {errorMessage ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="border-l-2 border-stamp bg-stamp-wash px-4 py-3 font-mono text-[12px] leading-relaxed text-ink">
           {errorMessage}
         </div>
       ) : null}
@@ -52,7 +43,7 @@ export default function LoginForm({ callbackUrl, error }: LoginFormProps) {
         type="button"
         onClick={handleSignIn}
         disabled={isSubmitting}
-        className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#1a73e8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1a73e8]/90 disabled:cursor-not-allowed disabled:opacity-70"
+        className="flex h-12 w-full items-center justify-center gap-3 bg-ink px-4 font-mono text-[11px] font-medium tracking-[0.09em] text-paper uppercase transition-colors hover:bg-stamp disabled:cursor-not-allowed disabled:opacity-60"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -65,7 +56,7 @@ export default function LoginForm({ callbackUrl, error }: LoginFormProps) {
           <path fill="#FBBC05" d="M11.38 28.31c-.5-1.5-.79-3.11-.79-4.81s.29-3.31.79-4.81l-6.92-5.37C2.73 15.35 1.5 19.65 1.5 24s1.23 8.65 2.96 11.68l6.92-5.37z" />
           <path fill="#34A853" d="M24 46.5c6.57 0 12.07-2.17 16.09-5.9l-7.39-5.72c-2.04 1.37-4.79 2.32-8.7 2.32-6.26 0-11.44-4.96-13.11-11.42l-6.92 5.37C7.19 40.64 14.93 46.5 24 46.5z" />
         </svg>
-        {isSubmitting ? "Redirecting to Google…" : "Continue with Google"}
+        {isSubmitting ? t("redirectingToGoogle") : t("continueWithGoogle")}
       </button>
     </div>
   );
