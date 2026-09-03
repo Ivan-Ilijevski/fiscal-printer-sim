@@ -15,6 +15,7 @@
   "savePreset": "Зачувај пресет",
   "deletePreset": "Избриши пресет",
   "presetValidationEmptyName": "Внеси име на пресет пред зачувување.",
+  "presetSaveFailed": "Пресетот не е зачуван — меморијата на прелистувачот е полна или недостапна.",
   "presetSaveSuccess": "Пресетот е зачуван.",
   "presetOverwriteSuccess": "Пресетот е препишан со тековните податоци.",
   "presetDeleteSuccess": "Пресетот е избришан.",

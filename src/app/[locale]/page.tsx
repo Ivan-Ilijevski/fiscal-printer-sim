@@ -10,6 +10,7 @@ import SignOutButton from '@/components/auth/SignOutButton';
 import { ReceiptData } from '@/types/receipt';
 import {
   builtInPresets,
+  currentDateTime,
   CustomPreset,
   defaultReceiptData,
   loadCustomPresets,
@@ -26,6 +27,10 @@ export default function Home() {
 
   useEffect(() => {
     setCustomPresets(loadCustomPresets());
+    // Stamped after mount rather than at module load: a module-level `new Date()` is evaluated
+    // once per process, so it goes stale on a long-running server and differs between the
+    // server and client renders.
+    setReceiptData((current) => ({ ...current, ...currentDateTime() }));
   }, []);
 
   const handlePresetSelect = (presetId: string) => {
@@ -61,7 +66,10 @@ export default function Home() {
       ? customPresets.map((preset) => (preset.id === existingPreset.id ? nextPreset : preset))
       : [...customPresets, nextPreset];
 
-    saveCustomPresets(nextCustomPresets);
+    if (!saveCustomPresets(nextCustomPresets)) {
+      return { status: 'storage' as const };
+    }
+
     setCustomPresets(nextCustomPresets);
     setSelectedPresetId(nextPreset.id);
 

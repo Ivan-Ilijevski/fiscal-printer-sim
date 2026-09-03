@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { attachSessionCookie, clearSessionCookie, SessionUser } from "@/lib/auth/session";
 import { buildGoogleCallbackUrl } from "@/lib/auth/google";
+import { authCookieOptions } from "@/lib/auth/cookies";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const TOKEN_INFO_ENDPOINT = "https://oauth2.googleapis.com/tokeninfo";
@@ -47,22 +48,16 @@ function buildLoginRedirect(request: NextRequest, reason: string): NextResponse 
   response.cookies.set({
     name: STATE_COOKIE_NAME,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
+    ...authCookieOptions(request),
     maxAge: 0,
-    path: "/",
   });
   response.cookies.set({
     name: CALLBACK_COOKIE_NAME,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
+    ...authCookieOptions(request),
     maxAge: 0,
-    path: "/",
   });
-  clearSessionCookie(response);
+  clearSessionCookie(request, response);
   return response;
 }
 
@@ -140,24 +135,18 @@ export async function GET(request: NextRequest) {
 
   const redirectUrl = new URL(callbackPath, request.nextUrl.origin);
   const response = NextResponse.redirect(redirectUrl);
-  attachSessionCookie(response, user);
+  attachSessionCookie(request, response, user);
   response.cookies.set({
     name: STATE_COOKIE_NAME,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
+    ...authCookieOptions(request),
     maxAge: 0,
-    path: "/",
   });
   response.cookies.set({
     name: CALLBACK_COOKIE_NAME,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
+    ...authCookieOptions(request),
     maxAge: 0,
-    path: "/",
   });
 
   return response;

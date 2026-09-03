@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData, ReceiptItem } from '@/types/receipt';
 import { CustomPreset, ReceiptPreset } from '@/lib/receipt-presets';
+import { sumItems } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +28,7 @@ interface ReceiptFormProps {
   onSavePreset: (
     name: string,
     data: ReceiptData
-  ) => { status: 'empty' } | { status: 'saved' | 'overwritten'; presetId: string };
+  ) => { status: 'empty' } | { status: 'storage' } | { status: 'saved' | 'overwritten'; presetId: string };
   onDeletePreset: (presetId: string) => void;
 }
 
@@ -76,23 +77,48 @@ export default function ReceiptForm({
 
   const selectedCustomPreset = customPresets.find((preset) => preset.id === selectedPresetId);
 
+  // The sliders and number inputs below declare these bounds; typing into the number input
+  // bypasses them, and an empty or non-numeric field yields 0/NaN. A NaN spacing propagates
+  // into the canvas geometry and renders a blank receipt, so every numeric field is clamped here.
+  const numericFieldBounds: Record<string, { min: number; max: number }> = {
+    datamatrixSize: { min: 50, max: 300 },
+    fiscalLogoSize: { min: 50, max: 384 },
+    headerFontSize: { min: 10, max: 50 },
+    headerFontSpacing: { min: 5, max: 50 },
+    bodyFontSize: { min: 10, max: 50 },
+    bodyFontSpacing: { min: 5, max: 50 },
+  };
+
+  const toNumber = (value: string | number, { min, max, fallback }: { min: number; max: number; fallback: number }) => {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return Math.min(max, Math.max(min, parsed));
+  };
+
   const updateStoreInfo = (field: string, value: string) => {
-    // Convert numeric fields to numbers
-    const numericFields = ['datamatrixSize', 'fiscalLogoSize', 'headerFontSize', 'headerFontSpacing', 'bodyFontSize', 'bodyFontSpacing'];
-    const processedValue = numericFields.includes(field) ? Number(value) : value;
-    updateFormData({ [field]: processedValue });
+    const bounds = numericFieldBounds[field];
+    if (!bounds) {
+      updateFormData({ [field]: value });
+      return;
+    }
+
+    const current = formData[field as keyof ReceiptData];
+    const fallback = typeof current === 'number' ? current : bounds.min;
+    updateFormData({ [field]: toNumber(value, { ...bounds, fallback }) });
   };
 
   const updateItem = (index: number, field: keyof ReceiptItem, value: string | number | boolean) => {
     const newItems = [...formData.items];
     const item = { ...newItems[index] };
-    
+
     if (field === 'name') {
       item.name = value as string;
     } else if (field === 'quantity') {
-      item.quantity = Number(value);
+      item.quantity = toNumber(value as string | number, { min: 1, max: 1_000_000, fallback: 1 });
     } else if (field === 'price') {
-      item.price = Number(value);
+      item.price = toNumber(value as string | number, { min: 0, max: 100_000_000, fallback: 0 });
     } else if (field === 'vatType') {
       item.vatType = value as 'A' | 'B' | 'V' | 'G';
     } else if (field === 'isDomestic') {
@@ -100,12 +126,10 @@ export default function ReceiptForm({
     }
 
     newItems[index] = item;
-    
-    const totalAmount = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
     updateFormData({
       items: newItems,
-      total: Number(totalAmount.toFixed(2))
+      total: sumItems(newItems),
     });
   };
 
@@ -119,21 +143,19 @@ export default function ReceiptForm({
     };
     
     const newItems = [...formData.items, newItem];
-    const totalAmount = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
     updateFormData({
       items: newItems,
-      total: Number(totalAmount.toFixed(2))
+      total: sumItems(newItems),
     });
   };
 
   const removeItem = (index: number) => {
     const newItems = formData.items.filter((_, i) => i !== index);
-    const totalAmount = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
     updateFormData({
       items: newItems,
-      total: Number(totalAmount.toFixed(2))
+      total: sumItems(newItems),
     });
   };
 
@@ -149,6 +171,11 @@ export default function ReceiptForm({
 
     if (result.status === 'empty') {
       setPresetFeedback(t('presetValidationEmptyName'));
+      return;
+    }
+
+    if (result.status === 'storage') {
+      setPresetFeedback(t('presetSaveFailed'));
       return;
     }
 

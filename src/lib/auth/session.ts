@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
+import { authCookieOptions } from "@/lib/auth/cookies";
 
 export const SESSION_COOKIE_NAME = "fps_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -58,28 +60,26 @@ export function createSessionToken(user: SessionUser): { token: string; payload:
   };
 }
 
-export function attachSessionCookie(response: NextResponse, user: SessionUser): SessionData {
+export function attachSessionCookie(
+  request: NextRequest,
+  response: NextResponse,
+  user: SessionUser,
+): SessionData {
   const { token, payload } = createSessionToken(user);
   response.cookies.set({
     name: SESSION_COOKIE_NAME,
     value: token,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
-    path: "/",
+    ...authCookieOptions(request),
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
   return payload;
 }
 
-export function clearSessionCookie(response: NextResponse): void {
+export function clearSessionCookie(request: NextRequest, response: NextResponse): void {
   response.cookies.set({
     name: SESSION_COOKIE_NAME,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
-    path: "/",
+    ...authCookieOptions(request),
     maxAge: 0,
   });
 }

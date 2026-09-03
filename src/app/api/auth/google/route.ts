@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomStateToken } from "@/lib/auth/session";
 import { buildGoogleCallbackUrl } from "@/lib/auth/google";
+import { authCookieOptions } from "@/lib/auth/cookies";
 
 const GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const STATE_COOKIE_NAME = "fps_oauth_state";
@@ -45,20 +46,14 @@ export async function GET(request: NextRequest) {
   response.cookies.set({
     name: STATE_COOKIE_NAME,
     value: state,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
+    ...authCookieOptions(request),
     maxAge: STATE_TTL_SECONDS,
-    path: "/",
   });
   response.cookies.set({
     name: CALLBACK_COOKIE_NAME,
     value: encodeURIComponent(callbackUrl),
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true,
+    ...authCookieOptions(request),
     maxAge: STATE_TTL_SECONDS,
-    path: "/",
   });
 
   return response;

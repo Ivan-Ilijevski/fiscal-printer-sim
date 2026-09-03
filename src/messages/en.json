@@ -15,6 +15,7 @@
   "savePreset": "Save preset",
   "deletePreset": "Delete preset",
   "presetValidationEmptyName": "Enter a preset name before saving.",
+  "presetSaveFailed": "Couldn't save the preset — browser storage is full or unavailable.",
   "presetSaveSuccess": "Preset saved.",
   "presetOverwriteSuccess": "Preset overwritten with current receipt data.",
   "presetDeleteSuccess": "Preset deleted.",

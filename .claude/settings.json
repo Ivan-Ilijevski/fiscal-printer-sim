@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(node -e \"const e=require\\('./src/messages/en.json'\\),m=require\\('./src/messages/mk.json'\\);const f=\\(o,p=''\\)=>Object.entries\\(o\\).flatMap\\(\\([k,v]\\)=>typeof v==='object'?f\\(v,p+k+'.'\\):[p+k]\\);const ek=f\\(e\\),mk=f\\(m\\);console.log\\('en-only:',ek.filter\\(k=>!mk.includes\\(k\\)\\),'mk-only:',mk.filter\\(k=>!ek.includes\\(k\\)\\)\\)\")",
+      "Bash(cp package.json /tmp/package.json.bak)",
+      "Bash(cp src/app/globals.css /tmp/globals.css.bak)",
+      "Bash(cp postcss.config.mjs /tmp/postcss.config.mjs.bak)",
+      "Bash(cp tailwind.config.js /tmp/tailwind.config.js.bak)",
+      "Bash(mkdir -p /tmp/vatcheck)",
+      "Bash(npx --yes esbuild@0.25.0 src/utils/VATCalc.ts src/lib/receipt-presets.ts --bundle --format=esm --outdir=/tmp/vatcheck --alias:@=./src --log-level=warning)",
+      "Read(//tmp/**)",
+      "mcp__plugin_playwright_playwright__browser_run_code_unsafe",
+      "Bash(npm run *)"
+    ]
+  }
+}
