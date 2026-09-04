@@ -18,7 +18,14 @@
       "Bash(echo \"=== tsc exit: $? ===\")",
       "mcp__plugin_playwright_playwright__browser_click",
       "mcp__plugin_playwright_playwright__browser_press_key",
-      "Bash(pkill -f \"next dev\")"
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s http://localhost:3000/mk -b \"fps_session=$\\(cat /private/tmp/claude-501/-Users-ivanilijevski-fiscal-printer-sim/be105f62-eafc-4f8c-9117-55ea9a49a554/scratchpad/session.txt\\)\")",
+      "Bash(grep -oE \"\\(Error|error\\)[^<]{0,300}\")",
+      "Bash(curl -s -o /dev/null -w \"en: %{http_code}\\\\n\" http://localhost:3000/en -b \"fps_session=$\\(cat /private/tmp/claude-501/-Users-ivanilijevski-fiscal-printer-sim/be105f62-eafc-4f8c-9117-55ea9a49a554/scratchpad/session.txt\\)\")",
+      "Bash(curl -s -o /dev/null -w \"mk: %{http_code}\\\\n\" http://localhost:3000/mk -b \"fps_session=$\\(cat /private/tmp/claude-501/-Users-ivanilijevski-fiscal-printer-sim/be105f62-eafc-4f8c-9117-55ea9a49a554/scratchpad/session.txt\\)\")",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(node check.mjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 30 http://localhost:3111/en)"
     ]
   }
 }

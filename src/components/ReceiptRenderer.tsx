@@ -8,12 +8,21 @@ import { Button } from '@/components/ui/button';
 import bwipjs from 'bwip-js';
 import { wrap } from 'module';
 
+const NATURAL_WIDTH = 384; // thermal printer resolution; the canvas backing store never changes
+
 interface ReceiptRendererProps {
   receiptData: ReceiptData;
   onCanvasReady?: (canvas: HTMLCanvasElement) => void;
+  /**
+   * Display scale only. 1 = one canvas pixel per CSS pixel. The backing store stays 384px
+   * wide at every value, so the downloaded/shared PNG is unaffected by zoom.
+   */
+  zoom?: number;
+  /** The scrolling viewport around the canvas — the parent measures it for Fit/Fill. */
+  scrollRef?: React.Ref<HTMLDivElement>;
 }
 
-export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptRendererProps) {
+export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, scrollRef }: ReceiptRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
@@ -78,20 +87,38 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady }: ReceiptR
   }, [receiptData, onCanvasReady, logoImage, fontMetrics]);
 
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div className="flex w-full min-h-0 flex-1 flex-col gap-4 xl:flex-none">
       {/* The paper. Pure #FFFFFF behind a #FFFFFF raster, so the canvas edge disappears and
           the receipt reads as one continuous strip; the mask tears the top and bottom edges.
-          The canvas scrolls inside it, which keeps the actions below always reachable. */}
-      <div className="drop-shadow-[0_6px_18px_rgb(26_23_20/0.13)]">
-        <div className="perforated bg-sheet px-4 py-7">
-          <div className="native-scroll scrollbar-hide max-h-[calc(100dvh-21rem)] overflow-auto">
-            <canvas ref={canvasRef} className="mx-auto block" style={{ maxWidth: '100%', height: 'auto' }} />
+          Below xl it flexes to fill the sheet; at xl it is a sticky column, so it caps instead. */}
+      <div className="flex min-h-0 flex-1 flex-col drop-shadow-[0_6px_18px_rgb(26_23_20/0.13)] xl:flex-none">
+        <div className="perforated flex min-h-0 flex-1 flex-col bg-sheet px-4 py-7 xl:flex-none">
+          <div
+            ref={scrollRef}
+            className="native-scroll scrollbar-hide min-h-0 flex-1 overflow-auto xl:max-h-[calc(100dvh-24rem)] xl:flex-none"
+          >
+            {/* w-fit + min-w-full: centres the canvas while it is narrower than the container,
+                and stops the classic `mx-auto` overflow bug from making the left edge
+                unreachable once zoom makes it wider. */}
+            <div className="w-fit min-w-full">
+              <canvas
+                ref={canvasRef}
+                className="mx-auto block"
+                style={{
+                  width: NATURAL_WIDTH * zoom,
+                  height: 'auto',
+                  // 1-bit pixel font: smooth scaling merges stems and can erase the comma
+                  // in "22,74". Nearest-neighbour keeps every scaled pixel square.
+                  imageRendering: 'pixelated',
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {isRendered && (
-        <div className="grid w-full grid-cols-2 gap-2">
+        <div className="grid w-full shrink-0 grid-cols-2 gap-2">
           <Button onClick={downloadReceipt}>{t('downloadReceipt')}</Button>
           <Button onClick={shareReceipt} variant="outline">
             {t('shareReceipt')}

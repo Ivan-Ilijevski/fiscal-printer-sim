@@ -88,6 +88,13 @@ export default function Home() {
     }
   };
 
+  const handleImportReceipt = (data: ReceiptData) => {
+    setReceiptData(data);
+    // An imported receipt isn't any of the known presets, so clear the selection rather than
+    // leave a stale preset highlighted.
+    setSelectedPresetId(undefined);
+  };
+
   return (
     <div className="min-h-screen-safe relative z-[2]">
       <div className="mx-auto max-w-[1500px] px-5 pt-8 pb-28 sm:px-8 xl:pb-12">
@@ -130,6 +137,7 @@ export default function Home() {
               onPresetSelect={handlePresetSelect}
               onSavePreset={handleSavePreset}
               onDeletePreset={handleDeletePreset}
+              onImportReceipt={handleImportReceipt}
             />
           </div>
 

@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData, ReceiptItem } from '@/types/receipt';
 import { CustomPreset, ReceiptPreset } from '@/lib/receipt-presets';
+import { downloadReceiptJson, parseReceiptFile } from '@/lib/receipt-file';
+import { clampNumeric, numericFieldBounds } from '@/lib/receipt-schema';
 import { calculateVAT, formatDenar, sumItems, VatType } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +34,7 @@ interface ReceiptFormProps {
     data: ReceiptData
   ) => { status: 'empty' } | { status: 'storage' } | { status: 'saved' | 'overwritten'; presetId: string };
   onDeletePreset: (presetId: string) => void;
+  onImportReceipt: (data: ReceiptData) => void;
 }
 
 export default function ReceiptForm({
@@ -43,10 +46,12 @@ export default function ReceiptForm({
   onPresetSelect,
   onSavePreset,
   onDeletePreset,
+  onImportReceipt,
 }: ReceiptFormProps) {
   const [formData, setFormData] = useState(initialData);
   const [presetName, setPresetName] = useState('');
   const [presetFeedback, setPresetFeedback] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const t = useTranslations();
 
   const fontOptions: Option[] = [
@@ -79,26 +84,6 @@ export default function ReceiptForm({
 
   const selectedCustomPreset = customPresets.find((preset) => preset.id === selectedPresetId);
 
-  // The sliders and number inputs below declare these bounds; typing into the number input
-  // bypasses them, and an empty or non-numeric field yields 0/NaN. A NaN spacing propagates
-  // into the canvas geometry and renders a blank receipt, so every numeric field is clamped here.
-  const numericFieldBounds: Record<string, { min: number; max: number }> = {
-    datamatrixSize: { min: 50, max: 300 },
-    fiscalLogoSize: { min: 50, max: 384 },
-    headerFontSize: { min: 10, max: 50 },
-    headerFontSpacing: { min: 5, max: 50 },
-    bodyFontSize: { min: 10, max: 50 },
-    bodyFontSpacing: { min: 5, max: 50 },
-  };
-
-  const toNumber = (value: string | number, { min, max, fallback }: { min: number; max: number; fallback: number }) => {
-    const parsed = typeof value === 'number' ? value : Number(value);
-    if (!Number.isFinite(parsed)) {
-      return fallback;
-    }
-    return Math.min(max, Math.max(min, parsed));
-  };
-
   const updateStoreInfo = (field: string, value: string) => {
     const bounds = numericFieldBounds[field];
     if (!bounds) {
@@ -108,7 +93,7 @@ export default function ReceiptForm({
 
     const current = formData[field as keyof ReceiptData];
     const fallback = typeof current === 'number' ? current : bounds.min;
-    updateFormData({ [field]: toNumber(value, { ...bounds, fallback }) });
+    updateFormData({ [field]: clampNumeric(value, { ...bounds, fallback }) });
   };
 
   const updateItem = (index: number, field: keyof ReceiptItem, value: string | number | boolean) => {
@@ -118,9 +103,9 @@ export default function ReceiptForm({
     if (field === 'name') {
       item.name = value as string;
     } else if (field === 'quantity') {
-      item.quantity = toNumber(value as string | number, { min: 1, max: 1_000_000, fallback: 1 });
+      item.quantity = clampNumeric(value as string | number, { min: 1, max: 1_000_000, fallback: 1 });
     } else if (field === 'price') {
-      item.price = toNumber(value as string | number, { min: 0, max: 100_000_000, fallback: 0 });
+      item.price = clampNumeric(value as string | number, { min: 0, max: 100_000_000, fallback: 0 });
     } else if (field === 'vatType') {
       item.vatType = value as VatType;
     } else if (field === 'isDomestic') {
@@ -201,6 +186,49 @@ export default function ReceiptForm({
     setPresetFeedback(t('presetDeleteSuccess'));
   };
 
+  const handleExport = () => {
+    downloadReceiptJson(formData);
+  };
+
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    // Reset immediately so re-selecting the same file still fires `change`, regardless of
+    // which branch below returns.
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      setPresetFeedback(t('importReadFailed'));
+      return;
+    }
+
+    const result = parseReceiptFile(text);
+
+    if (result.status === 'invalid-json') {
+      setPresetFeedback(t('importInvalidJson'));
+      return;
+    }
+
+    if (result.status === 'invalid-shape') {
+      setPresetFeedback(t('importInvalidShape'));
+      return;
+    }
+
+    setFormData(result.data);
+    onImportReceipt(result.data);
+    setPresetFeedback(
+      result.filledFields.length === 0
+        ? t('importSuccess')
+        : t('importSuccessWithDefaults', { count: result.filledFields.length })
+    );
+  };
+
   // VAT bands, with the amount actually contained in the промет for each — not the rate.
   const vatBands: { type: VatType; label: string; rate: number }[] = [
     { type: 'A', label: t('vatShortA'), rate: formData.vatTypeA },
@@ -264,6 +292,26 @@ export default function ReceiptForm({
             </Button>
           </div>
 
+          {/* Scoped to the current receipt only — the custom preset library is a separate
+              concern that lives in localStorage, not in this file. */}
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" onClick={handleExport} variant="outline">
+              {t('exportJson')}
+            </Button>
+
+            <Button type="button" onClick={() => fileInputRef.current?.click()} variant="outline">
+              {t('importJson')}
+            </Button>
+
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImportFile}
+            />
+          </div>
+
           {presetFeedback ? (
             <p className="border-l-2 border-seal bg-paper-2 px-3 py-2 font-mono text-[11px] text-ink-2">
               {presetFeedback}
@@ -275,6 +323,14 @@ export default function ReceiptForm({
       {/* 02 — Identity */}
       <Section index="02" title={t('identity')} delay={60}>
         <FieldGrid>
+          <TextField
+            id="receiptType"
+            label={t('receiptTypeLabel')}
+            value={formData.receiptType}
+            placeholder={t('receiptTypePlaceholder')}
+            onChange={(v) => updateStoreInfo('receiptType', v)}
+            className="sm:col-span-2"
+          />
           <TextField
             id="storeName"
             label={t('storeName')}
