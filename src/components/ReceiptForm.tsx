@@ -6,6 +6,15 @@ import { ReceiptData, ReceiptItem } from '@/types/receipt';
 import { CustomPreset, ReceiptPreset } from '@/lib/receipt-presets';
 import { downloadReceiptJson, parseReceiptFile } from '@/lib/receipt-file';
 import { clampNumeric, numericFieldBounds } from '@/lib/receipt-schema';
+import {
+  ECC200_SQUARE_CAPACITY,
+  QUIET_ZONE_MODULES,
+  base256CodewordCount,
+  capacityFor,
+  decodeBytes,
+  fitModuleScale,
+  smallestSizeFor,
+} from '@/lib/datamatrix';
 import { calculateVAT, formatDenar, sumItems, VatType } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -228,6 +237,57 @@ export default function ReceiptForm({
         : t('importSuccessWithDefaults', { count: result.filledFields.length })
     );
   };
+
+  /**
+   * Live feedback for the payload field: decoded byte count, and in Base256 mode how much of
+   * the symbol's codeword capacity that uses plus the resulting module size. Without this the
+   * only signal that a paste lost bytes is a barcode that scans wrong — invisible until print.
+   */
+  const datamatrixHint = (): string | undefined => {
+    if (!formData.datamatrixCode) return undefined;
+
+    const result = decodeBytes(formData.datamatrixCode, formData.datamatrixCodeEncoding);
+    if (!result.ok) return t(result.error.key, result.error.values);
+
+    if (formData.datamatrixEncodation !== 'base256') {
+      return t('datamatrixHintBytes', { bytes: result.bytes.length });
+    }
+
+    const needed = base256CodewordCount(result.bytes.length);
+    const modules = formData.datamatrixSymbolSize || smallestSizeFor(needed);
+    const capacity = modules ? capacityFor(modules) : null;
+    if (!modules || !capacity) {
+      return t('datamatrixErrorNoSize', { bytes: result.bytes.length });
+    }
+    if (needed > capacity) {
+      return t('datamatrixErrorTooLarge', {
+        bytes: result.bytes.length,
+        max: capacity - (result.bytes.length <= 249 ? 2 : 3),
+        modules,
+      });
+    }
+
+    const { size } = fitModuleScale(
+      formData.datamatrixSize,
+      modules + QUIET_ZONE_MODULES * 2,
+      formData.datamatrixScaling
+    );
+    return t('datamatrixHintBase256', {
+      bytes: result.bytes.length,
+      used: needed,
+      capacity,
+      modules,
+      size,
+    });
+  };
+
+  const symbolSizeOptions: Option[] = [
+    { value: '0', label: t('datamatrixSymbolSizeAuto') },
+    ...ECC200_SQUARE_CAPACITY.map(({ modules, dataCodewords }) => ({
+      value: String(modules),
+      label: `${modules}×${modules} — ${dataCodewords - 2} B`,
+    })),
+  ];
 
   // VAT bands, with the amount actually contained in the промет for each — not the rate.
   const vatBands: { type: VatType; label: string; rate: number }[] = [
@@ -508,14 +568,60 @@ export default function ReceiptForm({
             value={formData.datamatrixCode}
             placeholder={t('datamatrixCodePlaceholder')}
             onChange={(v) => updateStoreInfo('datamatrixCode', v)}
+            hint={datamatrixHint()}
             className="sm:col-span-2"
           />
+          <SelectField
+            id="datamatrixCodeEncoding"
+            label={t('datamatrixCodeEncoding')}
+            value={formData.datamatrixCodeEncoding}
+            onChange={(v) => updateStoreInfo('datamatrixCodeEncoding', v)}
+            options={[
+              { value: 'text', label: t('datamatrixEncodingText') },
+              { value: 'hex', label: t('datamatrixEncodingHex') },
+              { value: 'base64', label: t('datamatrixEncodingBase64') },
+            ]}
+          />
+          <SelectField
+            id="datamatrixEncodation"
+            label={t('datamatrixEncodation')}
+            value={formData.datamatrixEncodation}
+            onChange={(v) => updateStoreInfo('datamatrixEncodation', v)}
+            options={[
+              { value: 'auto', label: t('datamatrixEncodationAuto') },
+              { value: 'base256', label: t('datamatrixEncodationBase256') },
+            ]}
+          />
+          {/* Only Base256 pads to a chosen capacity; in auto mode bwip-js sizes the symbol. */}
+          {formData.datamatrixEncodation === 'base256' ? (
+            <SelectField
+              id="datamatrixSymbolSize"
+              label={t('datamatrixSymbolSize')}
+              value={String(formData.datamatrixSymbolSize)}
+              onChange={(v) => updateStoreInfo('datamatrixSymbolSize', v)}
+              options={symbolSizeOptions}
+              className="sm:col-span-2"
+            />
+          ) : null}
+
+          <SelectField
+            id="datamatrixScaling"
+            label={t('datamatrixScaling')}
+            value={formData.datamatrixScaling}
+            onChange={(v) => updateStoreInfo('datamatrixScaling', v)}
+            options={[
+              { value: 'exact', label: t('datamatrixScalingExact') },
+              { value: 'crisp', label: t('datamatrixScalingCrisp') },
+            ]}
+          />
+          {/* Step 1, not 10: under `exact` scaling every pixel in the range is a distinct size,
+              and under `crisp` a coarse step would skip whole-module sizes outright. */}
           <SliderField
             id="datamatrixSize"
             label={t('datamatrixSize')}
             min={50}
-            max={300}
-            step={10}
+            max={384}
+            step={1}
             unit="px"
             value={formData.datamatrixSize}
             onChange={(v) => updateStoreInfo('datamatrixSize', v)}

@@ -50,9 +50,19 @@ export const defaultReceiptData: ReceiptData = withItems(
   date: '',
   dateTextFlag: false,
   time: '',
+  // text + auto reproduces the pre-encodings rendering exactly: `decodeBytes(..., 'text')`
+  // yields the same bytes bwip-js derived internally, and `auto` is its own encodation choice.
   datamatrixCode:
-    'AC455104813AC455104813AC00217425hffhjfhjkhdjkdfhjkdfhdfjklhfdjkfjkdfhdfjklhdfdjfkdfhjklfhkidfgkloptrjkhrjkghkjghgkhgkfhghgkhgfhjkgdfjkghfjkghfgjkdfhgjkhggkjhfgkjfhgkhgdfkjh',
+    '4143343135313030383231414334313538313730313841433030323539323937E39F0000000000006FB86F71226A5AA44A92478B0E5B81BE513D9226045A0EC3489F53FB5D871B668C8355964BEC7585C84D965751147D482AC12783A5A0D981FDDFCA56A96FFA5CEB17A930DFF46177881447D0BAE87BBB17F87DD6D97A5FD007D49744C24FB28B',
+  datamatrixCodeEncoding: 'hex',
+  datamatrixEncodation: 'base256',
+  // Only consulted in base256 mode. 48x48 is what Macedonian fiscal devices emit, and it is
+  // NOT the smallest size that fits a typical payload — so it has to be stated, not derived.
+  datamatrixSymbolSize: 48,
   datamatrixSize: 197,
+  // The slider is taken literally. `crisp` instead rounds down to whole pixels per module,
+  // which is the evener thermal raster but only reaches multiples of the module count.
+  datamatrixScaling: 'exact',
   fiscalLogoSize: 190,
   headerFontSize: 22,
   headerFontSpacing: 30,

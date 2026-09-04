@@ -123,7 +123,7 @@
 
 @font-face {
   font-family: 'PixelFont';
-  src: url('/CompactFont-Bold.woff2') format('woff2');
+  src: url('/CompactFont-bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -135,7 +135,7 @@
    browser synthesize bold from the regular face, which has correct metrics and a real comma. */
 @font-face {
   font-family: 'PixelFontWide';
-  src: url('/PixelFont-Regular.woff2') format('woff2');
+  src: url('/Pixelfont-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -185,6 +185,34 @@
     background: var(--stamp);
     color: var(--paper);
   }
+}
+
+/* Radix scroll-lock vs. the sticky preview column.
+ *
+ * Every <Select> mounts react-remove-scroll (hardcoded inside Radix's SelectContent, no prop
+ * to turn it off). While open it stamps `data-scroll-locked` on <body> and appends a sheet to
+ * <head> with `body[data-scroll-locked] { overflow: hidden !important; margin-right: <gap>px }`.
+ *
+ * That is normally harmless because body's overflow propagates to the viewport — but `html`
+ * above sets overflow-x, and a non-`visible` root suppresses propagation. So the rule lands on
+ * body itself and makes it a scroll container: exactly the case the overflow-x comment above
+ * guards against, reintroduced at runtime. The desktop receipt column's position:sticky then
+ * resolves against body's scrollport, which never scrolls, so it drops to its static position
+ * at the top of the document and vanishes from view for as long as the dropdown is open.
+ *
+ * The margin-right compensates for a scrollbar that was never removed (html owns the document
+ * scrollbar and keeps it), which jogs the whole page sideways on classic-scrollbar platforms.
+ *
+ * `html` is load-bearing: Radix's sheet is injected after this one and is !important, so a bare
+ * body[…] selector would lose the cascade tie on source order. Unlayered for the same reason —
+ * layers reverse precedence for !important, which is one rule too many to have to reason about.
+ * Only the CSS half of the lock is undone; react-remove-scroll's wheel/touch handlers still
+ * block background scrolling, and they were doing all the real work anyway. */
+html body[data-scroll-locked] {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+  margin-right: 0 !important;
+  overscroll-behavior: auto;
 }
 
 /* ---------------------------------------------------------------------------

@@ -1,6 +1,14 @@
 import { ReceiptData } from '@/types/receipt';
 import { defaultReceiptData } from '@/lib/receipt-presets';
-import { clampNumeric, isFiniteNumber, isReceiptItem, numericFieldBounds } from '@/lib/receipt-schema';
+import {
+  clampNumeric,
+  isEncodation,
+  isFiniteNumber,
+  isModuleScaling,
+  isPayloadEncoding,
+  isReceiptItem,
+  numericFieldBounds,
+} from '@/lib/receipt-schema';
 import { sumItems } from '@/utils/VATCalc';
 
 const FILE_KIND = 'fiscal-receipt';
@@ -71,9 +79,8 @@ function looksLikeReceipt(candidate: Record<string, unknown>): boolean {
 }
 
 /**
- * Parses an exported receipt file leniently: every field is taken only when it passes its
- * type guard, everything else falls back to `defaultReceiptData` rather than rejecting the
- * whole file. This is what lets an older or hand-edited export still import cleanly.
+ * Parses the text of an exported receipt file. The leniency lives in `parseReceiptValue`; this
+ * only adds the JSON step, which a caller holding an already-parsed body (the render API) skips.
  */
 export function parseReceiptFile(text: string): ParseReceiptFileResult {
   let parsed: unknown;
@@ -83,7 +90,17 @@ export function parseReceiptFile(text: string): ParseReceiptFileResult {
     return { status: 'invalid-json' };
   }
 
-  const candidate = extractCandidate(parsed);
+  return parseReceiptValue(parsed);
+}
+
+/**
+ * Parses a receipt leniently: every field is taken only when it passes its type guard, everything
+ * else falls back to `defaultReceiptData` rather than rejecting the whole input. This is what lets
+ * an older or hand-edited export still import cleanly, and what lets an API caller send only the
+ * handful of fields they care about.
+ */
+export function parseReceiptValue(value: unknown): ParseReceiptFileResult {
+  const candidate = extractCandidate(value);
   if (!candidate || !looksLikeReceipt(candidate)) {
     return { status: 'invalid-shape' };
   }
@@ -95,6 +112,23 @@ export function parseReceiptFile(text: string): ParseReceiptFileResult {
       return value as ReceiptData[K];
     }
     filledFields.push(field);
+    return defaultReceiptData[field];
+  };
+
+  /**
+   * Like `take`, but an *absent* field isn't counted as "filled with a default". These fields
+   * were added after the export format shipped, so every older file legitimately lacks them
+   * and reporting them would make a clean legacy import look lossy. A field that is present
+   * but malformed is still reported — that's a real data problem.
+   */
+  const takeAdded = <K extends keyof ReceiptData>(field: K, guard: (value: unknown) => boolean): ReceiptData[K] => {
+    const value = candidate[field];
+    if (guard(value)) {
+      return value as ReceiptData[K];
+    }
+    if (value !== undefined) {
+      filledFields.push(field);
+    }
     return defaultReceiptData[field];
   };
 
@@ -119,7 +153,11 @@ export function parseReceiptFile(text: string): ParseReceiptFileResult {
     dateTextFlag: take('dateTextFlag', isBoolean),
     time: take('time', isString),
     datamatrixCode: take('datamatrixCode', isString),
+    datamatrixCodeEncoding: takeAdded('datamatrixCodeEncoding', isPayloadEncoding),
+    datamatrixEncodation: takeAdded('datamatrixEncodation', isEncodation),
+    datamatrixSymbolSize: takeAdded('datamatrixSymbolSize', isFiniteNumber),
     datamatrixSize: take('datamatrixSize', isFiniteNumber),
+    datamatrixScaling: takeAdded('datamatrixScaling', isModuleScaling),
     fiscalLogoSize: take('fiscalLogoSize', isFiniteNumber),
     bodyFontSize: take('bodyFontSize', isFiniteNumber),
     headerFontSize: take('headerFontSize', isFiniteNumber),
@@ -134,6 +172,7 @@ export function parseReceiptFile(text: string): ParseReceiptFileResult {
   // is no different from one typed into the number input.
   const boundedFields = [
     'datamatrixSize',
+    'datamatrixSymbolSize',
     'fiscalLogoSize',
     'bodyFontSize',
     'headerFontSize',

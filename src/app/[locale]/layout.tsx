@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { AuthSessionProvider } from "@/components/auth/SessionProvider";
 import { getSessionFromCookies } from "@/lib/auth/session";
+import { isLocale } from "@/i18n/config";
 import { fontVariables } from "@/lib/fonts";
 import "../globals.css";
 
@@ -28,6 +29,16 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+
+  // `[locale]` matches any single top-level segment, and the middleware only runs on `/` and
+  // `/(en|mk)/...`, so nothing else rejects a request for `/sw.js` or `/robots.txt`. Without
+  // this the segment is accepted as a locale and reaches NextIntlClientProvider, where the
+  // first message needing a formatter dies with `Invalid language tag`. Checked before the
+  // session redirect, so a signed-out probe 404s rather than bouncing through /login.
+  if (!isLocale(locale)) {
+    notFound();
+  }
+
   const session = await getSessionFromCookies();
 
   if (!session) {

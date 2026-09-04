@@ -13,10 +13,42 @@ This project now requires Google OAuth to access any authenticated page. Before 
 | `GOOGLE_CLIENT_ID` | OAuth client ID created in the Google Cloud Console. |
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret paired with the client ID. |
 | `AUTH_SESSION_SECRET` | A long random string used to sign the app's session cookies. |
+| `RECEIPT_API_KEY` | Shared secret for the receipt render API. Unset means that endpoint refuses every request. |
 
 When developing locally, add these values to `.env.local` and restart the dev server so the environment is updated. On Vercel, set the same keys under **Project Settings → Environment Variables** and redeploy.
 
 To sign in, visit `/login` and click **Continue with Google**. Successful authentication redirects you back to the locale-specific homepage (defaults to `/en`).
+
+## Receipt render API
+
+`POST /api/receipt/render` renders a receipt to a PNG through the same code the live preview
+uses, so an image fetched here matches one downloaded from the UI.
+
+```bash
+curl -sS -X POST http://localhost:3000/api/receipt/render \
+  -H 'content-type: application/json' \
+  -H "x-api-key: $RECEIPT_API_KEY" \
+  -d '{"items":[{"name":"Кафе","quantity":2,"price":3.5,"vatType":"A","isDomestic":false}]}' \
+  -o receipt.png
+```
+
+The body is either a bare receipt object or the UI's export envelope (`{kind, version, data}`),
+and every absent field falls back to the default receipt — send only what you care about. `date`
+and `time` default to the current clock. Responses are `image/png`; failures are JSON.
+
+| Response header | Meaning |
+| --- | --- |
+| `X-Receipt-Width` / `X-Receipt-Height` | Rendered pixel dimensions. |
+| `X-Receipt-Defaulted-Fields` | Fields you omitted or sent malformed, filled from the defaults. |
+| `X-Receipt-Font-Fallback` | Families this runtime has no face for, rendered in `PixelFont` instead. |
+
+Only `PixelFont` and `PixelFontWide` are bundled. A deployed container has no system fonts, so a
+receipt asking for `Courier New` renders in `PixelFont` there and reports it in the header, even
+though the same request may use the real face on a developer machine. Register additional
+families in `src/lib/receipt-canvas-node.ts` to change that.
+
+Status codes: `400` invalid JSON, a body that doesn't describe a receipt, or a datamatrix payload
+that won't encode; `401` bad or missing key; `413` body over 256KB; `503` `RECEIPT_API_KEY` unset.
 
 ## Getting Started
 

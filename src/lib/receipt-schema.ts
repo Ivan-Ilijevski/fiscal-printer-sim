@@ -1,11 +1,28 @@
 import { ReceiptData } from '@/types/receipt';
 
+export function isPayloadEncoding(value: unknown): value is ReceiptData['datamatrixCodeEncoding'] {
+  return value === 'text' || value === 'hex' || value === 'base64';
+}
+
+export function isEncodation(value: unknown): value is ReceiptData['datamatrixEncodation'] {
+  return value === 'auto' || value === 'base256';
+}
+
+export function isModuleScaling(value: unknown): value is ReceiptData['datamatrixScaling'] {
+  return value === 'exact' || value === 'crisp';
+}
+
 /**
  * `typeof NaN === 'number'`, so a plain typeof check would let NaN/Infinity through from
  * localStorage and straight into the canvas geometry (a NaN height renders nothing at all).
  */
 export function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
+}
+
+/** Absent is fine; present-but-wrong is not. Lets older saved receipts pass unchanged. */
+function isOptional(value: unknown, guard: (value: unknown) => boolean): boolean {
+  return value === undefined || guard(value);
 }
 
 export function isReceiptItem(value: unknown): value is ReceiptData['items'][number] {
@@ -51,6 +68,13 @@ export function isReceiptData(value: unknown): value is ReceiptData {
     typeof data.dateTextFlag === 'boolean' &&
     typeof data.time === 'string' &&
     typeof data.datamatrixCode === 'string' &&
+    // Optional: a preset saved before payload encodings existed has none of these. Requiring
+    // them would make this guard reject every such entry, and `loadCustomPresets` filters on
+    // it — the user's saved presets would silently vanish from the list.
+    isOptional(data.datamatrixCodeEncoding, isPayloadEncoding) &&
+    isOptional(data.datamatrixEncodation, isEncodation) &&
+    isOptional(data.datamatrixSymbolSize, isFiniteNumber) &&
+    isOptional(data.datamatrixScaling, isModuleScaling) &&
     isFiniteNumber(data.datamatrixSize) &&
     isFiniteNumber(data.fiscalLogoSize) &&
     isFiniteNumber(data.bodyFontSize) &&
@@ -69,7 +93,11 @@ export function isReceiptData(value: unknown): value is ReceiptData {
 // Shared between the form and the file importer, which must clamp identically — a NaN or
 // out-of-range spacing arriving from either path is the same failure mode.
 export const numericFieldBounds: Record<string, { min: number; max: number }> = {
-  datamatrixSize: { min: 50, max: 300 },
+  // Up to the full 384px print width. Every integer in the range is reachable under `exact`
+  // scaling, so the bound is the only thing limiting it.
+  datamatrixSize: { min: 50, max: 384 },
+  // In modules, not pixels. 0 = auto; 144 is the largest ECC200 square.
+  datamatrixSymbolSize: { min: 0, max: 144 },
   fiscalLogoSize: { min: 50, max: 384 },
   headerFontSize: { min: 10, max: 50 },
   headerFontSpacing: { min: 5, max: 50 },

@@ -28,7 +28,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 30 http://localhost:3111/en)",
       "Bash(node -e \"console.log\\('WebSocket global:', typeof WebSocket\\)\")",
       "Bash(node cdp.mjs \"eyJ1c2VyIjp7ImlkIjoibG9jYWwtdGVzdCIsImVtYWlsIjoiaXZhbi5kb2t0b3JvdEBnbWFpbC5jb20iLCJuYW1lIjoiTG9jYWwgVGVzdCIsInBpY3R1cmUiOm51bGx9LCJleHBpcmVzQXQiOjE3ODg1MTk0NzF9.in6yg1fbnjnOzZJWuY-f6hTDb9fXao19xG366j0qfFc\" \"http://localhost:3001/en\" 1440 900 desktop)",
-      "Bash(node probe.mjs \"eyJ1c2VyIjp7ImlkIjoibG9jYWwtdGVzdCIsImVtYWlsIjoiaXZhbi5kb2t0b3JvdEBnbWFpbC5jb20iLCJuYW1lIjoiTG9jYWwgVGVzdCIsInBpY3R1cmUiOm51bGx9LCJleHBpcmVzQXQiOjE3ODg1MTk0NzF9.in6yg1fbnjnOzZJWuY-f6hTDb9fXao19xG366j0qfFc\")"
+      "Bash(node probe.mjs \"eyJ1c2VyIjp7ImlkIjoibG9jYWwtdGVzdCIsImVtYWlsIjoiaXZhbi5kb2t0b3JvdEBnbWFpbC5jb20iLCJuYW1lIjoiTG9jYWwgVGVzdCIsInBpY3R1cmUiOm51bGx9LCJleHBpcmVzQXQiOjE3ODg1MTk0NzF9.in6yg1fbnjnOzZJWuY-f6hTDb9fXao19xG366j0qfFc\")",
+      "Bash(node --experimental-strip-types --input-type=module -e ' *)",
+      "Bash(node /private/tmp/claude-501/-Users-ivanilijevski-fiscal-printer-sim/fc6b9dca-094f-4c48-997e-54a216a1329a/scratchpad/measure.mjs http://localhost:3001/en)"
     ]
   }
 }

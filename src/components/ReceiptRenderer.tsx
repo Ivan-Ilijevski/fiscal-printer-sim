@@ -1,14 +1,23 @@
 'use client';
 
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData } from '@/types/receipt';
-import { calculateDomesticSum, calculateDomesticVAT, calculateVAT } from '@/utils/VATCalc';
 import { Button } from '@/components/ui/button';
-import bwipjs from 'bwip-js';
-import { wrap } from 'module';
-
-const NATURAL_WIDTH = 384; // thermal printer resolution; the canvas backing store never changes
+// The `browser` subpath, not the bare package: bwip-js's root export only declares
+// browser/node/electron/react-native conditions, none of which `moduleResolution: "bundler"`
+// matches, so the bare specifier resolves to no type declarations at all.
+import bwipjs from 'bwip-js/browser';
+import {
+  DatamatrixOptions,
+  RECEIPT_WIDTH,
+  Receipt2DContext,
+  ReceiptRenderDeps,
+  RawSymbol,
+  calculateReceiptHeight,
+  renderReceipt,
+} from '@/lib/receipt-render';
+import { DecodeMessage } from '@/lib/datamatrix';
 
 interface ReceiptRendererProps {
   receiptData: ReceiptData;
@@ -22,33 +31,44 @@ interface ReceiptRendererProps {
   scrollRef?: React.Ref<HTMLDivElement>;
 }
 
+/** An offscreen DOM canvas for the datamatrix module grid. */
+function createSurface(width: number, height: number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  return { image: canvas, ctx: ctx as unknown as Receipt2DContext };
+}
+
+/** `raw()` returns either a linear or a module-grid symbol; only the latter is drawable here. */
+function rawSymbol(options: DatamatrixOptions): RawSymbol | null {
+  const [symbol] = bwipjs.raw(options);
+  return symbol && 'pixs' in symbol ? symbol : null;
+}
+
 export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, scrollRef }: ReceiptRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const t = useTranslations();
 
-  // Memoize font metrics calculation - only recalculates when font family or size changes
-  const fontMetrics = useMemo(() => {
-    if (typeof window === 'undefined') return { maxCharactersPerLine: 32, avgCharWidth: 12 };
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return { maxCharactersPerLine: 32, avgCharWidth: 12 };
-
-    ctx.font = `${receiptData.bodyFontSize}px "${receiptData.bodyFontFamily}", monospace`;
-
-    // Measure average character width using a representative sample
-    const sampleText = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const sampleWidth = ctx.measureText(sampleText).width;
-    const avgCharWidth = sampleWidth / sampleText.length;
-
-    const width = 384;
-    const padding = 0;
-    const maxCharactersPerLine = Math.floor((width - 2 * padding) / avgCharWidth);
-
-    return { maxCharactersPerLine, avgCharWidth };
-  }, [receiptData.bodyFontFamily, receiptData.bodyFontSize]);
+  /**
+   * Paints the decode failure where the symbol would have gone, so the preview shows what went
+   * wrong instead of a silent gap. save/restore so a failure can't leave the context red and
+   * 12px for everything drawn after it.
+   */
+  const paintDatamatrixFailure = useCallback(
+    (ctx: Receipt2DContext, message: DecodeMessage, y: number) => {
+      ctx.save();
+      ctx.font = '12px monospace';
+      ctx.fillStyle = 'red';
+      ctx.textAlign = 'center';
+      ctx.fillText(t(message.key, message.values), RECEIPT_WIDTH / 2, y + 20);
+      ctx.restore();
+    },
+    [t]
+  );
 
   // Preload the fiscal logo image
   useEffect(() => {
@@ -69,7 +89,7 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const width = 384;
+    const width = RECEIPT_WIDTH;
     const height = calculateReceiptHeight(receiptData);
 
     canvas.width = width;
@@ -78,13 +98,22 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
 
-    renderReceipt(ctx, receiptData, width, logoImage, fontMetrics);
+    const deps: ReceiptRenderDeps = {
+      logo: logoImage,
+      createSurface,
+      rawSymbol,
+      // The generic the CSS stack has always used; the browser resolves it to a real face.
+      fontFallback: 'monospace',
+      onDatamatrixFailure: paintDatamatrixFailure,
+    };
+    // The DOM context is wider than what the renderer declares it needs; see Receipt2DContext.
+    renderReceipt(ctx as unknown as Receipt2DContext, receiptData, width, deps);
     setIsRendered(true);
 
     if (onCanvasReady) {
       onCanvasReady(canvas);
     }
-  }, [receiptData, onCanvasReady, logoImage, fontMetrics]);
+  }, [receiptData, onCanvasReady, logoImage, paintDatamatrixFailure]);
 
   return (
     <div className="flex w-full min-h-0 flex-1 flex-col gap-4">
@@ -103,7 +132,7 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
                 ref={canvasRef}
                 className="mx-auto block"
                 style={{
-                  width: NATURAL_WIDTH * zoom,
+                  width: RECEIPT_WIDTH * zoom,
                   height: 'auto',
                   // 1-bit pixel font: smooth scaling merges stems and can erase the comma
                   // in "22,74". Nearest-neighbour keeps every scaled pixel square.
@@ -177,399 +206,3 @@ function canvasToPngFile(canvas: HTMLCanvasElement, name: string): File {
   }
   return new File([bytes], name, { type: 'image/png' });
 }
-
-function calculateReceiptHeight(data: ReceiptData): number {
-  // Header: receipt type + number + store info (4 lines)
-  const headerHeight = (data.headerFontSpacing * 2) + (data.bodyFontSpacing * 3) + 60;
-
-  // Items
-  const itemsHeight = data.items.length * data.bodyFontSpacing;
-
-  // VAT sections and totals (approximately 15-20 lines)
-  const vatSectionHeight = data.bodyFontSpacing * 20;
-
-  // Datamatrix and logo
-  const datamatrixHeight = data.datamatrixCode ? data.datamatrixSize + 10 : 0;
-  const logoHeight = data.fiscalLogoSize ? (data.fiscalLogoSize / (2120 / 981)) + 20 : 0;
-
-  const padding = 100;
-
-  return headerHeight + itemsHeight + vatSectionHeight + datamatrixHeight + logoHeight + padding;
-}
-
-function renderReceipt(
-  ctx: CanvasRenderingContext2D,
-  data: ReceiptData,
-  width: number,
-  logoImage: HTMLImageElement | null,
-  fontMetrics: { maxCharactersPerLine: number; avgCharWidth: number }
-) {
-  const padding = 0;
-
-  const { maxCharactersPerLine, avgCharWidth } = fontMetrics;
-  console.log('Max chars per line:', maxCharactersPerLine, 'Avg char width:', avgCharWidth.toFixed(2));
-
-  // Helper function to create separator lines dynamically based on actual text width
-  const createSeparator = (pattern: string = '-') => {
-    ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
-    const patternWidth = ctx.measureText(pattern).width;
-    const repeatCount = Math.ceil((width - 2 * padding) / patternWidth);
-    return pattern.repeat(repeatCount);
-  };
-
-  let y = data.headerFontSize + 10; // Start with enough space for first line
-
-  ctx.fillStyle = 'black';
-  ctx.textAlign = 'center';
-
-  ctx.font = `${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
-
-  // Apply double width if enabled
-  if (data.headerFontDoubleWidth) {
-    ctx.save();
-    ctx.scale(2, 1);
-    ctx.fillText(data.receiptType, width / 4, y);
-    ctx.restore();
-  } else {
-    ctx.fillText(data.receiptType, width / 2, y);
-  }
-  y += data.headerFontSpacing;
-
-  if (data.headerFontDoubleWidth) {
-    ctx.save();
-    ctx.scale(2, 1);
-    ctx.fillText(`#${data.receiptNumber}`, width / 4, y);
-    ctx.restore();
-  } else {
-    ctx.fillText(`#${data.receiptNumber}`, width / 2, y);
-  }
-  y += data.headerFontSpacing;
-
-  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
-  ctx.fillText(data.storeName, width / 2, y);
-  y += data.bodyFontSpacing;
-  ctx.fillText(data.address, width / 2, y);
-  y += data.bodyFontSpacing;
-  ctx.fillText(`ДАН.БРОЈ: ${data.taxNumber}`, width / 2, y);
-  y += data.bodyFontSpacing;
-  ctx.fillText(`ДДВ БРОЈ: ${data.vatNumber}`, width / 2, y);
-  y += data.bodyFontSpacing + 10;
-
-
-  ctx.textAlign = 'left';
-
-  
-
-  data.items.forEach(item => {
-    const itemNameLineB = item.name.length > 30 ? item.name.slice(30) : '';
-    const itemLine = `${item.quantity} x ${item.price.toFixed(2).replace('.', ',')}  `;
-    const totalPrice = item.price * item.quantity;
-    const priceText = `${totalPrice.toFixed(2).replace('.', ',')} ${item.vatType==='A'?'А':item.vatType==='B'?'Б':item.vatType==='V'?'В':'Г'}`;
-    // си имаат две линии за текст ако има повеќе артикли
-
-    ctx.textAlign = 'right';
-    ctx.fillText(itemLine, width - padding, y);
-    y+= data.bodyFontSpacing;
-    ctx.textAlign = 'left';
-
-    const lines = wrapTextKing(item.name, maxCharactersPerLine - itemLine.length);
-    if (countLines(lines) > 1) {
-      y -= data.bodyFontSpacing; // move back up to overwrite the first line
-    }
-
-    for(const line of lines.split('\n')) {
-      ctx.fillText(line, padding, y);
-      y += data.bodyFontSpacing;
-      
-    }
-    y-= data.bodyFontSpacing;
-
-    //ctx.fillText(`${item.name}`, padding, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(priceText, width - padding, y);
-    ctx.textAlign = 'left';
-    y += data.bodyFontSpacing;
-  });
-
-  {/* Промет од македонски производи */}
-  ctx.fillText(createSeparator('- '), padding, y);
-  y += data.bodyFontSpacing;
-  //18
-  
-
-  const dVatA = calculateDomesticVAT(data, 'A');
-  const dVatB = calculateDomesticVAT(data, 'B');
-  const dVatV = calculateDomesticVAT(data, 'V');
-  const dVatG = calculateDomesticVAT(data, 'G');
-
-
-  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
-  ctx.fillText(`ПРОМЕТ ОД МАКЕДОНСКИ ПР.`,padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(calculateDomesticSum(data), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ А=${data.vatTypeA.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(dVatA.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ Б=${data.vatTypeB.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(dVatB.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ В=${data.vatTypeV.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(dVatV.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ Г=${data.vatTypeG.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(dVatG.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText((dVatA + dVatB + dVatV + dVatG).toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(createSeparator('- '), padding, y);
-  y += data.bodyFontSpacing;
-  //18
-  
-
-  const vatA = calculateVAT(data, 'A');
-  const vatB = calculateVAT(data, 'B');
-  const vatV = calculateVAT(data, 'V');
-  const vatG = calculateVAT(data, 'G');
-
-
-  ctx.font = `bold ${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
-  ctx.fillText(`ВКУПЕН ПРОМЕТ`,padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText((vatA + vatB + vatV + vatG).toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ А=${data.vatTypeA.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(vatA.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ Б=${data.vatTypeB.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(vatB.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ В=${data.vatTypeV.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(vatV.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(`ВКУПНО ДДВ Г=${data.vatTypeG.toFixed(2).replace('.', ',')}%`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(vatG.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing;
-
-  ctx.textAlign = 'left';
-  ctx.fillText(createSeparator('-'), padding, y);
-  y += data.bodyFontSpacing;
-
-  // ctx.font = '12px monospace';
-  // ctx.textAlign = 'center';
-  ctx.fillText('ВИ БЛАГОДАРИМЕ!', padding, y);
-  y += data.bodyFontSpacing ;
-  ctx.fillText(`${data.paymentMethod}`, padding, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
-  y += data.bodyFontSpacing/2;
-  ctx.textAlign = 'left';
-  
-
-  // Render 2x2 datamatrix
-  if (data.datamatrixCode) {
-    render2x2Datamatrix(ctx, data.datamatrixCode, data.datamatrixSize, width, y);
-  }
-
-  y += data.datamatrixSize + data.bodyFontSpacing;
-
-  ctx.fillText(`0035120`, padding, y);
-  ctx.textAlign = 'center';
-  ctx.fillText(`${data.dateTextFlag ? 'ДАТУМ ' : ''}${data.date}`, width / 2, y);
-  ctx.textAlign = 'right';
-
-  ctx.fillText(`${data.time}`, width - padding, y);
-  y += data.bodyFontSpacing/2;
-
-  // Render fiscal logo if image is loaded
-  if (logoImage) {
-    // Original image dimensions: 2120 x 981
-    const aspectRatio = 2120 / 981;
-    const logoWidth = data.fiscalLogoSize;
-    const logoHeight = data.fiscalLogoSize / aspectRatio;
-    ctx.drawImage(logoImage, padding, y, logoWidth, logoHeight);
-  }
-
-  y += (data.fiscalLogoSize / (2120 / 981))/2 ;
-
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
-  ctx.font = `bold ${data.bodyFontSize + 2}px "${data.bodyFontFamily}", monospace`;
-  ctx.fillText('АС456784334', width - padding - 20, y - data.bodyFontSpacing/4);
-  ctx.textBaseline = 'top';
-  ctx.fillText('АС564323389', width - padding - 20, y + data.bodyFontSpacing/4);
-
-  y += (data.fiscalLogoSize / (2120 / 981))/2 + data.headerFontSpacing;
-
-
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.font = `${data.headerFontSize}px "${data.headerFontFamily}", monospace`;
-
-  // Apply double width if enabled
-  if (data.headerFontDoubleWidth) {
-    ctx.save();
-    ctx.scale(2, 1);
-    ctx.fillText(data.receiptType, width / 4, y);
-    ctx.restore();
-  } else {
-    ctx.fillText(data.receiptType, width / 2, y);
-  }
-
-  y += data.bodyFontSpacing * 2;
-  ctx.textAlign = 'left';
-  ctx.font = `${data.bodyFontSize}px "${data.bodyFontFamily}", monospace`;
-  ctx.fillText(createSeparator('-'), padding, y);
-  
-
-}
-
-// Dynamic Width (Build Regex)
-  function wrapTextKing(s: string, w: number): string {
-    return s.replace(
-      new RegExp(`(?![^\\n]{1,${w}}$)([^\\n]{1,${w}})\\s`, 'g'), '$1\n'
-    );
-  }
-
-  function countLines(text: string): number {
-    return text.split(/\r?\n/).length;
-  }
-
-
-function render2x2Datamatrix(ctx: CanvasRenderingContext2D, code: string, displaySize: number, canvasWidth: number, y: number) {
-  try {
-    // Generate the full datamatrix using bwip-js
-    const canvas = document.createElement('canvas');
-    bwipjs.toCanvas(canvas, {
-      bcid: 'datamatrix',
-      text: code,
-      scale: 3,
-      includetext: false,
-    });
-
-    // Get the dimensions of the generated datamatrix
-    const dmWidth = canvas.width;
-    const dmHeight = canvas.height;
-
-    // Center position
-    const startX = (canvasWidth - displaySize) / 2;
-
-    // Draw the complete datamatrix (scannable)
-    ctx.drawImage(
-      canvas,
-      0, 0, dmWidth, dmHeight, // source - entire datamatrix
-      startX, y, displaySize, displaySize // destination - centered
-    );
-
-    // Draw a black cross overlay to visually divide into 4 segments
-    // without actually breaking the datamatrix pattern underneath
-    ctx.fillStyle = 'black';
-    const crossWidth = 2; // Width of the cross lines
-    const halfSize = displaySize / 2;
-
-    // Vertical line of the cross (center)
-    ctx.fillRect(startX + halfSize - crossWidth / 2, y, crossWidth, displaySize);
-    // Horizontal line of the cross (center)
-    ctx.fillRect(startX, y + halfSize - crossWidth / 2, displaySize, crossWidth);
-  } catch (error) {
-    console.error('Error generating datamatrix:', error);
-    // Fallback: draw error message
-    ctx.font = '12px monospace';
-    ctx.fillStyle = 'red';
-    ctx.textAlign = 'center';
-    ctx.fillText('Error generating datamatrix', canvasWidth / 2, y + 20);
-    
-  }
-}
-
-  function wrapTextWithCharLimit(text: string, maxChars: number): string[] {
-    // Handle empty input
-    if (!text) return [];
-
-    const lines: string[] = [];
-
-    // Split by existing line breaks to preserve paragraphs
-    const paragraphs = text.split(/\r?\n/);
-
-    for (let p of paragraphs) {
-      // Trim trailing/leading spaces but preserve intentional single-space words
-      p = p.trim();
-
-      if (p.length === 0) {
-        // Preserve empty line as an empty string
-        lines.push('');
-        continue;
-      }
-
-      const words = p.split(/\s+/);
-      let currentLine = '';
-
-      for (const word of words) {
-        // If the word itself is longer than maxChars, break the word
-        if (word.length > maxChars) {
-          // flush current line first
-          if (currentLine.length > 0) {
-            lines.push(currentLine);
-            currentLine = '';
-          }
-
-          // break long word into chunks of maxChars
-          for (let i = 0; i < word.length; i += maxChars) {
-            lines.push(word.slice(i, i + maxChars));
-          }
-          continue;
-        }
-
-        // If adding the word would exceed the limit, push currentLine and start new
-        if ((currentLine.length ? currentLine.length + 1 : 0) + word.length > maxChars) {
-          if (currentLine.length > 0) lines.push(currentLine);
-          currentLine = word;
-        } else {
-          // append word to current line
-          currentLine = currentLine.length ? `${currentLine} ${word}` : word;
-        }
-      }
-
-      if (currentLine.length > 0) lines.push(currentLine);
-    }
-
-    return lines;
-  }       

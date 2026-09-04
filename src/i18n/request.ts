@@ -1,12 +1,10 @@
 import {getRequestConfig} from 'next-intl/server';
-
-// Can be imported from a shared config
-const locales = ['en', 'mk'] as const;
-type Locale = typeof locales[number];
+import {defaultLocale, isLocale} from '@/i18n/config';
 
 export default getRequestConfig(async ({locale}) => {
-  // Ensure that a valid locale is used and that it's a string
-  const usedLocale: string = (typeof locale === 'string' && locales.includes(locale as Locale)) ? locale : 'en';
+  // Belt and braces: the `[locale]` layout already 404s an unsupported locale, but this config
+  // is also reached from contexts that don't go through that layout.
+  const usedLocale = isLocale(locale) ? locale : defaultLocale;
 
   return {
     locale: usedLocale,
