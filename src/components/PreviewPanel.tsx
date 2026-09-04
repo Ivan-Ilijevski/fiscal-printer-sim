@@ -134,7 +134,7 @@ export default function PreviewPanel({ receiptData, open, onClose }: PreviewPane
       />
 
       <div
-        className={`fixed inset-0 z-50 flex flex-col bg-paper transition-transform duration-300 ease-out xl:static xl:z-auto xl:translate-y-0 xl:bg-transparent xl:transition-none ${
+        className={`fixed inset-0 z-50 flex flex-col bg-paper transition-transform duration-300 ease-out xl:static xl:z-auto xl:h-full xl:min-h-0 xl:translate-y-0 xl:bg-transparent xl:transition-none ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
@@ -153,7 +153,7 @@ export default function PreviewPanel({ receiptData, open, onClose }: PreviewPane
         {/* Content row: flexes so the paper absorbs the leftover height and the actions
             always sit directly above the close bar, with no dead space on any device. */}
         <div className="native-scroll flex min-h-0 flex-1 flex-col px-5 pt-4 pb-5 xl:overflow-visible xl:px-0 xl:pt-6 xl:pb-0">
-          <div className="mx-auto flex min-h-0 w-full max-w-[420px] flex-1 flex-col xl:mx-0 xl:flex-none">
+          <div className="mx-auto flex min-h-0 w-full max-w-[420px] flex-1 flex-col xl:mx-0">
             <div className="shrink-0 space-y-3">
               <ZoomControls
                 zoom={zoom}
@@ -166,7 +166,7 @@ export default function PreviewPanel({ receiptData, open, onClose }: PreviewPane
               <Ruler />
             </div>
 
-            <div className="mt-4 flex min-h-0 flex-1 flex-col xl:flex-none">
+            <div className="mt-4 flex min-h-0 flex-1 flex-col">
               <ReceiptRenderer
                 receiptData={receiptData}
                 zoom={zoom}

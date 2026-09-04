@@ -141,8 +141,11 @@ export default function Home() {
             />
           </div>
 
-          {/* Receipt — sticky right column at xl+, a slide-up sheet below it */}
-          <div className="xl:sticky xl:top-8 xl:self-start">
+          {/* Receipt — sticky right column at xl+, a slide-up sheet below it.
+              The explicit height (viewport minus top-8 and matching bottom breathing room)
+              keeps the column shorter than the viewport, so it pins immediately instead of
+              scrolling until its bottom edge appears. */}
+          <div className="xl:sticky xl:top-8 xl:h-[calc(100dvh-4rem)] xl:self-start">
             <PreviewPanel receiptData={receiptData} open={previewOpen} onClose={() => setPreviewOpen(false)} />
           </div>
         </div>

@@ -172,9 +172,13 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
-    overflow-x: hidden;
+    /* clip, NOT hidden: `hidden` on one axis computes the other to `auto`, which makes body a
+       scroll container. Sticky descendants would then resolve against body's scrollport, which
+       is exactly as tall as its content and so never scrolls — the desktop receipt column
+       would scroll away with the form. `clip` clips identically without a scroll container. */
+    overflow-x: clip;
     position: relative;
-    /* DO NOT add overscroll-behavior here - it breaks sticky positioning */
+    /* DO NOT set overflow (beyond clip) or overscroll-behavior here - either breaks sticky positioning */
   }
 
   ::selection {

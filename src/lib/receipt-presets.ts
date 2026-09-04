@@ -25,9 +25,9 @@ function withItems(base: Omit<ReceiptData, 'total'>, items: ReceiptItem[]): Rece
 }
 
 const defaultItems: ReceiptItem[] = [
-  { name: 'Кафе', quantity: 2, price: 3.5, vatType: 'A', isDomestic: false },
-  { name: 'Сендвич', quantity: 1, price: 8.99, vatType: 'A', isDomestic: false },
-  { name: 'Пастри', quantity: 3, price: 2.25, vatType: 'B', isDomestic: false },
+  { name: 'Нескафе', quantity: 2, price: 120, vatType: 'A', isDomestic: false },
+  { name: 'Сендвич', quantity: 1, price: 420, vatType: 'A', isDomestic: true },
+  { name: 'Домашен колбас парче', quantity: 1, price: 120, vatType: 'B', isDomestic: false },
 ];
 
 export const defaultReceiptData: ReceiptData = withItems(
@@ -64,6 +64,7 @@ export const defaultReceiptData: ReceiptData = withItems(
   },
   defaultItems
 );
+
 
 /** Current date/time in the formats the receipt expects (DD-MM-YYYY, HH:MM:SS). Client-side only. */
 export function currentDateTime(): { date: string; time: string } {

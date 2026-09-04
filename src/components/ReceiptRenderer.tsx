@@ -87,16 +87,14 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
   }, [receiptData, onCanvasReady, logoImage, fontMetrics]);
 
   return (
-    <div className="flex w-full min-h-0 flex-1 flex-col gap-4 xl:flex-none">
+    <div className="flex w-full min-h-0 flex-1 flex-col gap-4">
       {/* The paper. Pure #FFFFFF behind a #FFFFFF raster, so the canvas edge disappears and
           the receipt reads as one continuous strip; the mask tears the top and bottom edges.
-          Below xl it flexes to fill the sheet; at xl it is a sticky column, so it caps instead. */}
-      <div className="flex min-h-0 flex-1 flex-col drop-shadow-[0_6px_18px_rgb(26_23_20/0.13)] xl:flex-none">
-        <div className="perforated flex min-h-0 flex-1 flex-col bg-sheet px-4 py-7 xl:flex-none">
-          <div
-            ref={scrollRef}
-            className="native-scroll scrollbar-hide min-h-0 flex-1 overflow-auto xl:max-h-[calc(100dvh-24rem)] xl:flex-none"
-          >
+          It flexes to fill its container at every breakpoint — the mobile sheet below xl, the
+          fixed-height sticky column at xl — and the canvas scrolls inside it. */}
+      <div className="flex min-h-0 flex-1 flex-col drop-shadow-[0_6px_18px_rgb(26_23_20/0.13)]">
+        <div className="perforated flex min-h-0 flex-1 flex-col bg-sheet px-4 py-7">
+          <div ref={scrollRef} className="native-scroll scrollbar-hide min-h-0 flex-1 overflow-auto">
             {/* w-fit + min-w-full: centres the canvas while it is narrower than the container,
                 and stops the classic `mx-auto` overflow bug from making the left edge
                 unreachable once zoom makes it wider. */}
