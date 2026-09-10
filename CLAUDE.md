@@ -174,6 +174,36 @@ The `ReceiptRenderer` component:
 - **Download**: PNG export functionality with filename based on receipt number
 - **Scrollable**: Preview container scrolls to view full receipt on long receipts
 
+### Bluetooth Printing
+The receipt can be sent straight to a thermal printer from the browser over Web Bluetooth, with no
+server round-trip:
+- **Library**: `web-timini-print` (Apache-2.0) drives X5 / X5h "cat" BLE thermal printers. It is not
+  published on npm — `package.json` installs it from a local git checkout at
+  `/Users/ivanilijevski/Web-TiMini-Print`.
+- **Width match**: The library prints at exactly 384px wide, the same constant the whole app is
+  built on (`RECEIPT_WIDTH` in `src/lib/receipt-render.ts`), so the receipt goes to the printer with
+  no resampling.
+- **Components**:
+  - `src/components/PrinterActions.tsx` — owns a single `TiMiniPrinter` instance for the session
+    (connect once, print many times)
+  - `src/lib/printer.ts` — transfer constants, and the mapping from the library's error classes onto
+    `printer.*` i18n keys
+- **Byte-identical output**: The print path reuses `canvasToPngFile`, the same helper behind the
+  Download button, so what prints is byte-for-byte what downloads.
+- **Hardcoded transfer settings**: chunk 182 bytes, 50ms per write, blackening 5, feed 3. These are
+  the values measured working on the tested X5h; the library's own default chunk size is a
+  conservative 20.
+- **Requirements**: a Chromium browser (Chrome or Edge — not Safari or Firefox), a secure context
+  (HTTPS or `localhost`), and a real user gesture, because `requestPrinter()` opens Chrome's device
+  chooser.
+- **Error imports**: the error classes come from `web-timini-print/core`, not the root entry.
+
+Two contract points that will bite anyone editing this:
+- A resolved print promise means the **last byte was written**, not that the paper stopped moving.
+  Do not treat resolution as "printing finished".
+- After any failed transfer the library refuses new jobs until the printer is disconnected and
+  reconnected, so there is deliberately **no auto-retry** — the UI tells the user to reconnect.
+
 ## Internationalization
 
 The application supports multiple languages using `next-intl`:

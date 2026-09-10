@@ -35,6 +35,8 @@ export interface ReceiptData {
   datamatrixSymbolSize: number;
   /** Display size in px. Distinct from `datamatrixSymbolSize`, which is in modules. */
   datamatrixSize: number;
+  /** Blank space in px, applied symmetrically above and below the drawn barcode. */
+  datamatrixMargin: number;
   /**
    * `exact` draws at `datamatrixSize` verbatim, so any size between the whole-module steps is
    * reachable; `crisp` snaps down to whole pixels per module for an even thermal raster.

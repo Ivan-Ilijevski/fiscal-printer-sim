@@ -1,0 +1,5 @@
+# web-timini-print is installed from a git checkout and has no published dist, so pnpm has to run
+# its `prepare` script (tsc) at install time. pnpm 11 blocks build scripts on git-hosted packages
+# unless they are named here.
+allowBuilds:
+  web-timini-print@git+file:///Users/ivanilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57: true

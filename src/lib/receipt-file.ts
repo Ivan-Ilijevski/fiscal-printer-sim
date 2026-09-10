@@ -157,6 +157,7 @@ export function parseReceiptValue(value: unknown): ParseReceiptFileResult {
     datamatrixEncodation: takeAdded('datamatrixEncodation', isEncodation),
     datamatrixSymbolSize: takeAdded('datamatrixSymbolSize', isFiniteNumber),
     datamatrixSize: take('datamatrixSize', isFiniteNumber),
+    datamatrixMargin: takeAdded('datamatrixMargin', isFiniteNumber),
     datamatrixScaling: takeAdded('datamatrixScaling', isModuleScaling),
     fiscalLogoSize: take('fiscalLogoSize', isFiniteNumber),
     bodyFontSize: take('bodyFontSize', isFiniteNumber),
@@ -172,6 +173,7 @@ export function parseReceiptValue(value: unknown): ParseReceiptFileResult {
   // is no different from one typed into the number input.
   const boundedFields = [
     'datamatrixSize',
+    'datamatrixMargin',
     'datamatrixSymbolSize',
     'fiscalLogoSize',
     'bodyFontSize',

@@ -60,6 +60,7 @@ export const defaultReceiptData: ReceiptData = withItems(
   // NOT the smallest size that fits a typical payload — so it has to be stated, not derived.
   datamatrixSymbolSize: 48,
   datamatrixSize: 197,
+  datamatrixMargin: 1,
   // The slider is taken literally. `crisp` instead rounds down to whole pixels per module,
   // which is the evener thermal raster but only reaches multiples of the module count.
   datamatrixScaling: 'exact',

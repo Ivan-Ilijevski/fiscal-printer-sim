@@ -50,6 +50,50 @@ families in `src/lib/receipt-canvas-node.ts` to change that.
 Status codes: `400` invalid JSON, a body that doesn't describe a receipt, or a datamatrix payload
 that won't encode; `401` bad or missing key; `413` body over 256KB; `503` `RECEIPT_API_KEY` unset.
 
+## Printing over Bluetooth
+
+A rendered receipt can be printed straight from the browser to a **X5 / X5h BLE thermal printer**
+over Web Bluetooth — no server, no driver, no app. These are the only printers supported; other
+Bluetooth or USB printers are not.
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in Chrome or Edge, render a receipt, then hit
+**Connect printer** in the preview panel, pick the printer in Chrome's chooser, and hit **Print**.
+The connection is held for the session, so later prints go straight through without re-opening the
+chooser.
+
+| Requirement | Why |
+| --- | --- |
+| Chrome or Edge (Chromium) | Safari and Firefox ship no Web Bluetooth. |
+| HTTPS or `localhost` | Web Bluetooth needs a secure context — `http://192.168.x.x` will **not** work. |
+| Printer on, paper loaded, other printer apps closed | A BLE printer accepts one connection at a time. |
+
+Two things to expect: a **finished transfer is not a finished print** — the UI reports success once
+the last byte is written, while the paper keeps moving for a moment after. And a **failed transfer
+needs a reconnect, not a retry** — the printer refuses new jobs until you disconnect and connect
+again, so the app deliberately never retries on its own.
+
+### Deployment caveat
+
+**This will break a Vercel deploy as it stands.** `package.json` depends on:
+
+```json
+"web-timini-print": "git+file:///Users/ivanilijevski/Web-TiMini-Print"
+```
+
+That is an absolute path on the developer's machine, and `pnpm-workspace.yaml` allowlists the
+install-time build of that same path. No build machine has it, so `pnpm install` — and therefore the
+whole deploy — **will fail** until the dependency is changed.
+
+Two ways to fix it, both of which remove the machine-local path:
+
+1. Publish or push the library and depend on it by ref: `"web-timini-print": "github:owner/repo#ref"`.
+2. `npm pack` the library, commit the tarball (e.g. `vendor/web-timini-print-0.1.0.tgz`), and depend
+   on `"web-timini-print": "file:./vendor/web-timini-print-0.1.0.tgz"`.
+
 ## Getting Started
 
 First, install dependencies and run the development server:

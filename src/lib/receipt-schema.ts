@@ -76,6 +76,7 @@ export function isReceiptData(value: unknown): value is ReceiptData {
     isOptional(data.datamatrixSymbolSize, isFiniteNumber) &&
     isOptional(data.datamatrixScaling, isModuleScaling) &&
     isFiniteNumber(data.datamatrixSize) &&
+    isOptional(data.datamatrixMargin, isFiniteNumber) &&
     isFiniteNumber(data.fiscalLogoSize) &&
     isFiniteNumber(data.bodyFontSize) &&
     isFiniteNumber(data.headerFontSize) &&
@@ -98,6 +99,7 @@ export const numericFieldBounds: Record<string, { min: number; max: number }> = 
   datamatrixSize: { min: 50, max: 384 },
   // In modules, not pixels. 0 = auto; 144 is the largest ECC200 square.
   datamatrixSymbolSize: { min: 0, max: 144 },
+  datamatrixMargin: { min: 0, max: 50 },
   fiscalLogoSize: { min: 50, max: 384 },
   headerFontSize: { min: 10, max: 50 },
   headerFontSpacing: { min: 5, max: 50 },

@@ -153,7 +153,7 @@ export function calculateReceiptHeight(data: ReceiptData): number {
   const vatSectionHeight = data.bodyFontSpacing * 20;
 
   // Datamatrix and logo
-  const datamatrixHeight = data.datamatrixCode ? data.datamatrixSize + 10 : 0;
+  const datamatrixHeight = data.datamatrixCode ? data.datamatrixSize + data.datamatrixMargin * 2 : 0;
   const logoHeight = data.fiscalLogoSize ? (data.fiscalLogoSize / LOGO_ASPECT_RATIO) + 20 : 0;
 
   const padding = 100;
@@ -364,12 +364,13 @@ export function renderReceipt(
   ctx.fillText(data.total.toFixed(2).replace('.', ','), width - padding, y);
   ctx.textAlign = 'left';
 
- // y += data.bodyFontSpacing/2;
-  // Cannot make the margins smaller since there is padding in the datamatrix
+  y += data.datamatrixMargin;
 
   const datamatrixFailure = data.datamatrixCode ? renderDatamatrix(ctx, data, width, y, deps) : null;
 
-  y += data.datamatrixSize + data.bodyFontSpacing / 1.5;
+  y += data.datamatrixSize + data.datamatrixMargin;
+  
+  y+= data.bodyFontSpacing/1.5;
 
   ctx.fillText(`0035120`, padding, y);
   ctx.textAlign = 'center';

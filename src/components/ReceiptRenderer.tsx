@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ReceiptData } from '@/types/receipt';
 import { Button } from '@/components/ui/button';
+import PrinterActions from '@/components/PrinterActions';
 // The `browser` subpath, not the bare package: bwip-js's root export only declares
 // browser/node/electron/react-native conditions, none of which `moduleResolution: "bundler"`
 // matches, so the bare specifier resolves to no type declarations at all.
@@ -68,6 +69,18 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
       ctx.restore();
     },
     [t]
+  );
+
+  /**
+   * The print path deliberately reuses the download PNG rather than handing the live canvas to
+   * the printer: what goes to the thermal head is then byte-identical to what the user
+   * downloads and shares, so a receipt can never print differently from the file it produced.
+   * `canvasToPngFile` is a module-scope function declaration, hence usable above its own
+   * definition; memoized because PrinterActions keeps it for the lifetime of the session.
+   */
+  const getPng = useCallback(
+    () => (canvasRef.current ? canvasToPngFile(canvasRef.current, `receipt-${receiptData.receiptNumber}.png`) : null),
+    [receiptData.receiptNumber]
   );
 
   // Preload the fiscal logo image
@@ -145,11 +158,14 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
       </div>
 
       {isRendered && (
-        <div className="grid w-full shrink-0 grid-cols-2 gap-2">
-          <Button onClick={downloadReceipt}>{t('downloadReceipt')}</Button>
-          <Button onClick={shareReceipt} variant="outline">
-            {t('shareReceipt')}
-          </Button>
+        <div className="flex w-full shrink-0 flex-col gap-4">
+          <div className="grid w-full grid-cols-2 gap-2">
+            <Button onClick={downloadReceipt}>{t('downloadReceipt')}</Button>
+            <Button onClick={shareReceipt} variant="outline">
+              {t('shareReceipt')}
+            </Button>
+          </div>
+          <PrinterActions getPng={getPng} />
         </div>
       )}
     </div>

@@ -627,6 +627,16 @@ export default function ReceiptForm({
             onChange={(v) => updateStoreInfo('datamatrixSize', v)}
           />
           <SliderField
+            id="datamatrixMargin"
+            label={t('datamatrixMargin')}
+            min={0}
+            max={50}
+            step={1}
+            unit="px"
+            value={formData.datamatrixMargin}
+            onChange={(v) => updateStoreInfo('datamatrixMargin', v)}
+          />
+          <SliderField
             id="fiscalLogoSize"
             label={t('fiscalLogoSize')}
             min={50}
