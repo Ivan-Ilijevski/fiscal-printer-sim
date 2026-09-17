@@ -178,8 +178,8 @@ The `ReceiptRenderer` component:
 The receipt can be sent straight to a thermal printer from the browser over Web Bluetooth, with no
 server round-trip:
 - **Library**: `web-timini-print` (Apache-2.0) drives X5 / X5h "cat" BLE thermal printers. It is not
-  published on npm — `package.json` installs it from a local git checkout at
-  `/Users/ivanilijevski/Web-TiMini-Print`.
+  published on npm — `package.json` installs it from GitHub
+  (`Ivan-Ilijevski/Web-TiMini-Print`), pinned to a commit that `pnpm-workspace.yaml` must match.
 - **Width match**: The library prints at exactly 384px wide, the same constant the whole app is
   built on (`RECEIPT_WIDTH` in `src/lib/receipt-render.ts`), so the receipt goes to the printer with
   no resampling.

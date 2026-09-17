@@ -76,23 +76,20 @@ the last byte is written, while the paper keeps moving for a moment after. And a
 needs a reconnect, not a retry** — the printer refuses new jobs until you disconnect and connect
 again, so the app deliberately never retries on its own.
 
-### Deployment caveat
+### Updating the printer library
 
-**This will break a Vercel deploy as it stands.** `package.json` depends on:
+`web-timini-print` is not on npm. It installs from GitHub, pinned to a commit:
 
 ```json
-"web-timini-print": "git+file:///Users/ivanilijevski/Web-TiMini-Print"
+"web-timini-print": "github:Ivan-Ilijevski/Web-TiMini-Print#<commit sha>"
 ```
 
-That is an absolute path on the developer's machine, and `pnpm-workspace.yaml` allowlists the
-install-time build of that same path. No build machine has it, so `pnpm install` — and therefore the
-whole deploy — **will fail** until the dependency is changed.
+pnpm builds it at install time (its `prepare` script runs `tsc`), and pnpm 11 only runs that build
+for packages allowed in `pnpm-workspace.yaml`. The allowlist key includes the same commit, so to pick
+up a new version of the library, change the sha in **both** files, then run `pnpm install`.
 
-Two ways to fix it, both of which remove the machine-local path:
-
-1. Publish or push the library and depend on it by ref: `"web-timini-print": "github:owner/repo#ref"`.
-2. `npm pack` the library, commit the tarball (e.g. `vendor/web-timini-print-0.1.0.tgz`), and depend
-   on `"web-timini-print": "file:./vendor/web-timini-print-0.1.0.tgz"`.
+`package.json` pins `packageManager` to pnpm 11. Leave it pinned: without it Vercel falls back to
+pnpm 10, which cannot read the pnpm 11 `allowBuilds` syntax and fails the install.
 
 ## Getting Started
 

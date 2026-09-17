@@ -2,6 +2,7 @@
   "name": "fiscal-printer-sim",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
@@ -22,7 +23,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
-    "web-timini-print": "git+file:///Users/ivanilijevski/Web-TiMini-Print"
+    "web-timini-print": "github:Ivan-Ilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

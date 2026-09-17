@@ -1,5 +1,13 @@
-# web-timini-print is installed from a git checkout and has no published dist, so pnpm has to run
-# its `prepare` script (tsc) at install time. pnpm 11 blocks build scripts on git-hosted packages
-# unless they are named here.
+# web-timini-print is installed from GitHub and has no published dist, so pnpm has to run its
+# `prepare` script (tsc) at install time. pnpm 11 blocks build scripts on git-hosted packages
+# unless they are named here. The key names the exact commit, so bump it together with the
+# `#<sha>` in package.json.
+#
+# The two `false` entries are not new restrictions. pnpm 10 skipped both scripts silently, and
+# every production deploy before this file existed ran without them (sharp ships prebuilt binaries
+# as optional deps; unrs-resolver only serves eslint). pnpm 11 fails the install on an unanswered
+# build script instead of warning, so the existing behaviour has to be written down.
 allowBuilds:
-  web-timini-print@git+file:///Users/ivanilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57: true
+  web-timini-print@https://codeload.github.com/Ivan-Ilijevski/Web-TiMini-Print/tar.gz/176a57425bd97819d89434b2fb00c101dc697c57: true
+  sharp: false
+  unrs-resolver: false

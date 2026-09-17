@@ -48,8 +48,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       web-timini-print:
-        specifier: git+file:///Users/ivanilijevski/Web-TiMini-Print
-        version: git+file:///Users/ivanilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57
+        specifier: github:Ivan-Ilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57
+        version: https://codeload.github.com/Ivan-Ilijevski/Web-TiMini-Print/tar.gz/176a57425bd97819d89434b2fb00c101dc697c57
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3
@@ -2306,8 +2306,8 @@ packages:
       '@types/react':
         optional: true
 
-  web-timini-print@git+file:///Users/ivanilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57:
-    resolution: {commit: 176a57425bd97819d89434b2fb00c101dc697c57, repo: file:///Users/ivanilijevski/Web-TiMini-Print, type: git}
+  web-timini-print@https://codeload.github.com/Ivan-Ilijevski/Web-TiMini-Print/tar.gz/176a57425bd97819d89434b2fb00c101dc697c57:
+    resolution: {gitHosted: true, integrity: sha512-0qsCMbd73q5BobxI6xBobvzEopVfVAjDMx7hdZxFMCbBDVzTiHdBdzXVXRHgj4ZJNWUNTODhVHRqoUHhdd+6bw==, tarball: https://codeload.github.com/Ivan-Ilijevski/Web-TiMini-Print/tar.gz/176a57425bd97819d89434b2fb00c101dc697c57}
     version: 0.1.0
     engines: {node: '>=20.12.0'}
 
@@ -4659,7 +4659,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.2
 
-  web-timini-print@git+file:///Users/ivanilijevski/Web-TiMini-Print#176a57425bd97819d89434b2fb00c101dc697c57:
+  web-timini-print@https://codeload.github.com/Ivan-Ilijevski/Web-TiMini-Print/tar.gz/176a57425bd97819d89434b2fb00c101dc697c57:
     dependencies:
       '@types/web-bluetooth': 0.0.21
 
