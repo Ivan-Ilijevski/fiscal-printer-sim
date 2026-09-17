@@ -52,6 +52,8 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+  /** Bumped when the receipt's web fonts finish loading, purely to repaint the canvas. */
+  const [fontEpoch, setFontEpoch] = useState(0);
   const t = useTranslations();
 
   /**
@@ -95,6 +97,31 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
     };
   }, []);
 
+  /**
+   * PixelFont and PixelFontWide are @font-face web fonts, which the browser fetches lazily, and a
+   * canvas never repaints when one arrives: text drawn before then stays in the fallback face.
+   * On a slow or cold connection (typically a phone) every render on mount finishes before the
+   * font does, so the preview stayed in monospace until a font change forced a redraw. Load the
+   * faces the renderer draws with (bold is a separate file for PixelFont) and repaint once they
+   * settle. Deliberately not filtered through `document.fonts.check()` — a redundant repaint is
+   * cheap, and a wrong `true` there would bring the bug back. The size is irrelevant to which
+   * face loads.
+   */
+  const { bodyFontFamily, headerFontFamily } = receiptData;
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      document.fonts.load(`16px "${bodyFontFamily}"`),
+      document.fonts.load(`bold 16px "${bodyFontFamily}"`),
+      document.fonts.load(`16px "${headerFontFamily}"`),
+    ]).then(() => {
+      if (!cancelled) setFontEpoch((epoch) => epoch + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [bodyFontFamily, headerFontFamily]);
+
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -126,7 +153,7 @@ export default function ReceiptRenderer({ receiptData, onCanvasReady, zoom = 1, 
     if (onCanvasReady) {
       onCanvasReady(canvas);
     }
-  }, [receiptData, onCanvasReady, logoImage, paintDatamatrixFailure]);
+  }, [receiptData, onCanvasReady, logoImage, paintDatamatrixFailure, fontEpoch]);
 
   return (
     <div className="flex w-full min-h-0 flex-1 flex-col gap-4">
